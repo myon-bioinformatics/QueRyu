@@ -141,11 +141,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           version: "0.13.3"
           enable-cache: false
@@ -236,6 +236,110 @@ jobs:
           path: reports/junit.xml
           if-no-files-found: error
           retention-days: 14
+
+  # Parallel to the python -S vendor_sync check when that step is present.
+  # This repository has no such step. Verify mode never passes --record.
+  vendor-dispatch:
+    name: Vendor dispatch verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      parent_sha: ${{ steps.parent.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.13.3"
+          enable-cache: false
+          python-version: "3.12"
+      - name: Resolve parent main
+        id: parent
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          repo=myon-bioinformatics/myon-bioinformatics
+          line="$(git ls-remote "https://github.com/${repo}.git" refs/heads/main)"
+          count="$(printf '%s\n' "$line" | sed '/^$/d' | wc -l | tr -d ' ')"
+          if [[ "$count" != "1" ]]; then
+            echo "expected one ref from ${repo}, got ${count}" >&2
+            exit 1
+          fi
+          sha="${line%%[[:space:]]*}"
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "could not resolve ${repo}" >&2
+            exit 1
+          fi
+          api_id="$(gh api "repos/${repo}" --jq .id)"
+          api_name="$(gh api "repos/${repo}" --jq .full_name)"
+          if [[ ! "$api_id" =~ ^[0-9]+$ || "$api_id" != "638801160" || "$api_name" != "$repo" ]]; then
+            echo "repository id mismatch for ${repo}: api ${api_id:-missing} name ${api_name:-missing}" >&2
+            exit 1
+          fi
+          html_file="$(mktemp)"
+          curl -fsSL -A "QueRyu-CI" "https://github.com/${repo}" -o "$html_file"
+          page_id="$(python3 -c 'import re,sys; html=open(sys.argv[1], encoding="utf-8", errors="replace").read(); m=re.search(r"octolytics-dimension-repository_id.{0,40}content=.([0-9]+)", html); print(m.group(1) if m else "")' "$html_file")"
+          rm -f "$html_file"
+          if [[ -z "$page_id" || "$page_id" != "$api_id" ]]; then
+            echo "repository id mismatch for ${repo}: api ${api_id}, public page ${page_id:-missing}" >&2
+            exit 1
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Vendor dispatch parent"
+            echo "- repository: ${repo}"
+            echo "- repository id: ${api_id}"
+            echo "- resolved sha: ${sha}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Checkout parent driver
+        env:
+          PARENT_SHA: ${{ steps.parent.outputs.sha }}
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          test -n "$PARENT_SHA"
+          rm -rf .parent-driver
+          git init -q .parent-driver
+          git -C .parent-driver remote add origin https://github.com/myon-bioinformatics/myon-bioinformatics.git
+          git -C .parent-driver fetch --depth 1 origin "$PARENT_SHA"
+          git -C .parent-driver checkout -q --detach FETCH_HEAD
+          got="$(git -C .parent-driver rev-parse HEAD)"
+          if [[ "$got" != "$PARENT_SHA" ]]; then
+            echo "parent checkout ${got} does not match resolved ${PARENT_SHA}" >&2
+            exit 1
+          fi
+          test -f .parent-driver/pilot/vendor_dispatch.py
+          digest="$(python3 -c 'import hashlib,pathlib,sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' .parent-driver/pilot/vendor_dispatch.py)"
+          {
+            echo "- driver: pilot/vendor_dispatch.py"
+            echo "- driver sha256: ${digest}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify vendor lock
+        run: |
+          set -euo pipefail
+          python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)'
+          node -e 'const major = Number(process.versions.node.split(".")[0]); if (!(major >= 24)) process.exit(1)'
+          command -v uv >/dev/null
+          if [[ ! -f vendor.lock.json ]]; then
+            {
+              echo "## Vendor dispatch"
+              echo "vendor.lock.json is not in this repository. No entries to verify."
+              echo "- skips: none"
+              echo "- digest mismatches: none"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "vendor.lock.json absent; skips=none; digest mismatches=none"
+            exit 0
+          fi
+          python .parent-driver/pilot/vendor_dispatch.py --manifest vendor.lock.json
 
   failure-identity:
     needs: [changes, test]
