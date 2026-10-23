@@ -1,0 +1,27 @@
+{
+  "source": "User-supplied project artwork sheet, 2026-10-23",
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "coordinate_convention": "left, top, right-exclusive, bottom-exclusive",
+  "project": {
+    "label": "QueRyu",
+    "icon": [
+      1248,
+      351,
+      1415,
+      518
+    ],
+    "favicon": [
+      1430,
+      436,
+      1499,
+      505
+    ],
+    "icon_sha256": "d20ab35748a55e2dd0d56de9aec085eb6a44631ec330afc6aa7648875f5205ea",
+    "icon_rgb_sha256": "3a6e57953ea2d547f0980e40f55ed492c92afab0d7f7eead00b3f446432d559b",
+    "favicon_sha256": "12ea9dd5f0ffec310bae40823e53bd0d35d1d9564586a745267987e9754d5a9b",
+    "favicon_rgb_sha256": "bd9ad664d9e2e0b3fa85f94811406ba089f4a936daba3a6fc0a3f4c585d450b5"
+  }
+}

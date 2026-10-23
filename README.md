@@ -1,5 +1,11 @@
 # QueRyu
 
+<p align="center">
+  <img src="docs/brand/icon.png" alt="QueRyu icon" width="160" />
+</p>
+
+[Icon](docs/brand/icon.png) · [Favicon](docs/brand/favicon.png)
+
 > Reproducible fetching builds reliable understanding.
 >
 > Polite web fetching with conditional-GET caching and provenance for building NPB baseball observation datasets (split out from Aoi/queryu).
