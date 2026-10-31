@@ -39,7 +39,7 @@ This repository was split out from the [Aoi](https://github.com/myon-bioinformat
 
 ## Installation and usage
 
-Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). The runtime dependency is numpy (`ask/suggest.py`).
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). There are no runtime dependencies: `ask/suggest.py` uses `vendor/aoi/shrink/numpy_min.py`, vendored from Aoi and pinned in `vendor.lock.json` (it uses the system LAPACK/BLAS through ctypes when present and falls back to the standard library). numpy is a dev dependency, used only to compare results in tests.
 Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used.
 
 ```bash
