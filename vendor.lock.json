@@ -1,0 +1,14 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/Aoi",
+      "ref": "385e14a09ad56b69c57ec1cbae04c16299d387c5",
+      "commit": "385e14a09ad56b69c57ec1cbae04c16299d387c5",
+      "source": "shrink/numpy_min.py",
+      "destination": "vendor/aoi/shrink/numpy_min.py",
+      "blob_sha": "8dbd26bc91084cb94f34b19e65aa50a27c9fe0e8",
+      "sha256": "7c1f86ebb012ad355db3f690bea39916aa7d927967b519dfaf5acf54879c5a4c"
+    }
+  ]
+}

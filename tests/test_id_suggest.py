@@ -127,13 +127,14 @@ def test_explicit_id_present_in_docs_is_known():
 
 def test_ties_are_ordered_by_document_order():
     # 類似度がちょうど同じ文書は、文書の並び（ids の順）で毎回同じ順に出る
-    import numpy as np
+    import math
 
+    np = suggest.np  # vendor した numpy_min
     docs = [(f"P{i}", f"得失点差がプラスなら上位半分である {i}") for i in range(20, 0, -1)]
     idx = suggest.Index(docs, dim=4)
-    d = idx.Zf.shape[1]
-    idx.Zf = np.full_like(idx.Zf, 1 / np.sqrt(d))
-    idx.B = np.ones_like(idx.B)
+    n, d = idx.Zf.shape
+    idx.Zf = np.ones((n, d), np.float32) * np.float32(1 / math.sqrt(d))
+    idx.B = np.ones(idx.B.shape, np.int8)
     for mode in ("float", "binary"):
         got = idx.query("得失点差がプラスなら上位か", mode, 10)
         assert len({s for _, s in got}) == 1

@@ -3,15 +3,13 @@ name = "queryu"
 version = "0.1.0"
 description = "再現できる取得が、確かな理解をつくる。取得と観測データセットの作成（Aoi の queryu/ から独立）"
 requires-python = ">=3.11"
-# 抽出は最新 main の BlueProbe checkout を PYTHONPATH で渡す。実行時の依存は numpy だけ。
-dependencies = [
-    # 問いの候補（ask/suggest.py）。下限は Python 3.11 でも入る最新。
-    # より新しい Python では、numpy 側の対応範囲で解決する。
-    "numpy>=2.4.6",
-]
+# 抽出は最新 main の BlueProbe checkout を PYTHONPATH で渡す。実行時の依存はない（stdlib だけ）。
+# ask/suggest.py は Aoi から vendor した vendor/aoi/shrink/numpy_min.py を使う（vendor.lock.json）。
+dependencies = []
 
 [dependency-groups]
-dev = ["pytest>=9.1.1"]
+# numpy はテストで numpy_min の結果と突き合わせるためだけに使う。
+dev = ["pytest>=9.1.1", "numpy>=2.4.6"]
 
 [tool.uv]
 package = false

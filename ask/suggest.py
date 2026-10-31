@@ -15,7 +15,23 @@ import sys
 import unicodedata
 from pathlib import Path
 
-import numpy as np
+import importlib.util
+
+
+def _load_numpy_min():
+    """vendor/aoi の numpy_min を読む。numpy 本体は import しない（lock は vendor.lock.json）。"""
+    name = "queryu_numpy_min"
+    if name in sys.modules:
+        return sys.modules[name]
+    path = Path(__file__).resolve().parents[1] / "vendor" / "aoi" / "shrink" / "numpy_min.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+np = _load_numpy_min()
 
 # 試作（手書き 35 問、2026-10-12）の観測。このモジュールの既定値にはしない。
 # 範囲外 7 問の最高類似度のすぐ上に閾値を置くと、範囲外は 7/7 が判定不能になった。

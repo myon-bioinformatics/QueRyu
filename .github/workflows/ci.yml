@@ -129,14 +129,18 @@ jobs:
   test:
     if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: [changes, deps]
-    name: pytest (Python ${{ matrix.python }})
+    name: ${{ matrix.backend == 'pure' && 'pytest numpy_min NUMPY_MIN_PURE forced' || 'pytest' }} (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # NUMPY_MIN_PURE で stdlib 経路を強制した lane は遅い（実データの SVD が数分かかる）
+    timeout-minutes: ${{ matrix.backend == 'pure' && 30 || 10 }}
     strategy:
       fail-fast: false
       matrix:
         # Aoi の CI と同じ。failure-identity の expected-reports と揃えること
         python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        backend: [lapack]
+        # PURE 強制 lane。PR と push は 3.14 だけ、schedule と workflow_dispatch は 3.11 と 3.15 も
+        include: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '[{"python":"3.11","backend":"pure"},{"python":"3.14","backend":"pure"},{"python":"3.15","backend":"pure"}]' || '[{"python":"3.14","backend":"pure"}]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -221,16 +225,26 @@ jobs:
           check_source .test-deps/blueprobe blueprobe.py
           check_source .test-deps/blueprobe npb_calendar.py
           check_source .test-deps/blueprobe npb_team_annual.py
+      - name: Install LAPACK/BLAS for numpy_min
+        if: matrix.backend == 'lapack'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y -q liblapack3 libblas3
       - run: python -m compileall -q -x '\.test-deps' .
       - run: uv run --locked --python "${{ matrix.python }}" pytest -q --junitxml=reports/junit.xml
         env:
+          NUMPY_MIN_PURE: ${{ matrix.backend == 'pure' && '1' || '' }}
+          QUERYU_EXPECT_BACKEND: ${{ matrix.backend == 'pure' && 'stdlib' || 'lapack' }}
+          # vendor した numpy_min と最新 Aoi main のずれ: main への push と schedule では失敗、それ以外は xfail
+          QUERYU_STRICT_DRIFT: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && '1' || '' }}
           AOI_ROOT: ${{ github.workspace }}/.test-deps/aoi
           PYTHONPATH: ${{ github.workspace }}/.test-deps/blueprobe
       - name: Preserve JUnit report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: junit-py${{ matrix.python }}
+          name: ${{ matrix.backend == 'pure' && 'junit-pure-py' || 'junit-py' }}${{ matrix.python }}
           path: reports/junit.xml
           if-no-files-found: error
           retention-days: 14
@@ -243,7 +257,7 @@ jobs:
       actions: read
     uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-junit-identity.yml@9e3da7ae1846e9604ebc24bb5178f7de094a4e77
     with:
-      expected-reports: '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml"]'
+      expected-reports: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.11/junit.xml","junit-pure-py3.14/junit.xml","junit-pure-py3.15/junit.xml"]' || '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.14/junit.xml"]' }}
       artifact-pattern: junit-*
       output-artifact: failure-identity
       commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}
