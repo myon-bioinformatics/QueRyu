@@ -118,6 +118,36 @@ def test_stdlib_fallback_matches_lapack():
         assert {i: pytest.approx(s, abs=1e-4) for i, s in want.items()} == dict(got)
 
 
+def test_missing_libraries_fall_back_to_stdlib(monkeypatch):
+    """NUMPY_MIN_PURE なしで、ctypes.util.find_library が None かつ soname も開けないとき自動で stdlib になる。"""
+    import ctypes
+    import ctypes.util
+
+    monkeypatch.delenv("NUMPY_MIN_PURE", raising=False)
+    monkeypatch.delenv("NUMPY_MIN_LAPACK", raising=False)
+    monkeypatch.delenv("NUMPY_MIN_BLAS", raising=False)
+    looked_up = []
+
+    def no_library(name):
+        looked_up.append(name)
+        return None
+
+    def no_cdll(name, *a, **k):
+        raise OSError(f"{name}: cannot open shared object file")
+
+    monkeypatch.setattr(ctypes.util, "find_library", no_library)
+    monkeypatch.setattr(ctypes, "CDLL", no_cdll)
+    spec = importlib.util.spec_from_file_location("queryu_numpy_min_nolib", VENDORED)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert "lapack" in looked_up
+    assert module.BACKEND == "stdlib"
+    real = numpy.array([[1.0, 2.0], [3.0, 4.0], [5.0, 7.0]])
+    s_real = numpy.linalg.svd(real, full_matrices=False, compute_uv=False)
+    s_mine = module.linalg.svd(module.array(real.tolist()), full_matrices=False, compute_uv=False)
+    assert numpy.allclose(s_mine.tolist(), s_real, atol=1e-9)
+
+
 def test_backend_matches_ci_lane():
     """CI の lane（QUERYU_EXPECT_BACKEND）で、想定した経路が選ばれている。"""
     expected = os.environ.get("QUERYU_EXPECT_BACKEND")
@@ -144,4 +174,8 @@ def test_vendor_lock_matches_vendored_copy():
         # Aoi の checkout（CI では最新 main）とずれたら知らせる。更新は lock ごと PR で行う
         upstream = hashlib.sha256((Path(aoi) / entry["source"]).read_bytes()).hexdigest()
         if upstream != entry["sha256"]:
-            pytest.xfail(f"Aoi の numpy_min.py が vendor 時から変わった（{upstream}）")
+            msg = (f"Aoi の numpy_min.py が vendor 時から変わった（{upstream} != {entry['sha256']}）。"
+                   "vendor/aoi と vendor.lock.json を PR で更新する")
+            if os.environ.get("QUERYU_STRICT_DRIFT") == "1":
+                pytest.fail(msg)  # main への push と schedule
+            pytest.xfail(msg)  # PR などでは報告だけ

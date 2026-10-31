@@ -129,14 +129,18 @@ jobs:
   test:
     if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: [changes, deps]
-    name: pytest (Python ${{ matrix.python }})
+    name: ${{ matrix.backend == 'pure' && 'pytest numpy_min NUMPY_MIN_PURE forced' || 'pytest' }} (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # NUMPY_MIN_PURE で stdlib 経路を強制した lane は遅い（実データの SVD が数分かかる）
+    timeout-minutes: ${{ matrix.backend == 'pure' && 30 || 10 }}
     strategy:
       fail-fast: false
       matrix:
         # Aoi の CI と同じ。failure-identity の expected-reports と揃えること
         python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        backend: [lapack]
+        # PURE 強制 lane。PR と push は 3.14 だけ、schedule と workflow_dispatch は 3.11 と 3.15 も
+        include: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '[{"python":"3.11","backend":"pure"},{"python":"3.14","backend":"pure"},{"python":"3.15","backend":"pure"}]' || '[{"python":"3.14","backend":"pure"}]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -222,6 +226,7 @@ jobs:
           check_source .test-deps/blueprobe npb_calendar.py
           check_source .test-deps/blueprobe npb_team_annual.py
       - name: Install LAPACK/BLAS for numpy_min
+        if: matrix.backend == 'lapack'
         run: |
           set -euo pipefail
           sudo apt-get update -q
@@ -229,119 +234,20 @@ jobs:
       - run: python -m compileall -q -x '\.test-deps' .
       - run: uv run --locked --python "${{ matrix.python }}" pytest -q --junitxml=reports/junit.xml
         env:
-          QUERYU_EXPECT_BACKEND: lapack
+          NUMPY_MIN_PURE: ${{ matrix.backend == 'pure' && '1' || '' }}
+          QUERYU_EXPECT_BACKEND: ${{ matrix.backend == 'pure' && 'stdlib' || 'lapack' }}
+          # vendor した numpy_min と最新 Aoi main のずれ: main への push と schedule では失敗、それ以外は xfail
+          QUERYU_STRICT_DRIFT: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && '1' || '' }}
           AOI_ROOT: ${{ github.workspace }}/.test-deps/aoi
           PYTHONPATH: ${{ github.workspace }}/.test-deps/blueprobe
       - name: Preserve JUnit report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: junit-py${{ matrix.python }}
+          name: ${{ matrix.backend == 'pure' && 'junit-pure-py' || 'junit-py' }}${{ matrix.python }}
           path: reports/junit.xml
           if-no-files-found: error
           retention-days: 14
-
-  stdlib-lane:
-    if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-    needs: [changes, deps]
-    name: pytest numpy_min stdlib (Python ${{ matrix.python }})
-    runs-on: ubuntu-latest
-    # LAPACK/BLAS なしの stdlib 経路は遅い（実データの SVD が数分かかる）
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.14"]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: "latest"
-          enable-cache: false
-          python-version: "${{ matrix.python }}"
-          activate-environment: true
-      # サイクルデータ（cycles/）・blueprobe の fixture・nagoyaction/inbox は Aoi に残す。
-      # 依存の SHA は固定しない。deps が実行時に main（または workflow_dispatch の ref）を解決する。
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: myon-bioinformatics/Aoi
-          ref: ${{ needs.deps.outputs.aoi_sha }}
-          path: .test-deps/aoi
-          persist-credentials: false
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: myon-bioinformatics/BlueProbe
-          ref: ${{ needs.deps.outputs.blueprobe_sha }}
-          path: .test-deps/blueprobe
-          persist-credentials: false
-      - name: Verify resolved checkouts
-        env:
-          AOI_SHA: ${{ needs.deps.outputs.aoi_sha }}
-          BLUEPROBE_SHA: ${{ needs.deps.outputs.blueprobe_sha }}
-        run: |
-          set -euo pipefail
-          strict=0
-          if [[ "${GITHUB_EVENT_NAME}" == "schedule" ]]; then
-            strict=1
-          elif [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            strict=1
-          fi
-          provenance_fail() {
-            local msg="$1"
-            if [[ "$strict" == "1" ]]; then
-              echo "::error::${msg}"
-              echo "ERROR: ${msg}" >> "$GITHUB_STEP_SUMMARY"
-              exit 1
-            fi
-            echo "::warning::${msg}"
-            echo "WARNING: ${msg}" >> "$GITHUB_STEP_SUMMARY"
-          }
-          require_head() {
-            local dir="$1" expected="$2" got
-            got="$(git -C "$dir" rev-parse HEAD)"
-            if [[ "$got" != "$expected" ]]; then
-              echo "::error::${dir} checkout ${got} does not match resolved ${expected}"
-              exit 1
-            fi
-          }
-          check_source() {
-            local dir="$1" rel="$2" file tmp digest
-            file="${dir}/${rel}"
-            if [[ ! -f "$file" ]]; then
-              echo "::error::missing ${file} at the resolved commit"
-              exit 1
-            fi
-            tmp="$(mktemp)"
-            git -C "$dir" cat-file blob "HEAD:${rel}" > "$tmp"
-            if ! cmp -s "$tmp" "$file"; then
-              rm -f "$tmp"
-              provenance_fail "${file} bytes differ from the resolved commit"
-            else
-              rm -f "$tmp"
-            fi
-            digest="$(python3 -c 'import hashlib,pathlib,sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$file")"
-            echo "- ${file}: ${digest}" >> "$GITHUB_STEP_SUMMARY"
-          }
-          test -d .test-deps/aoi/cycles
-          test -d .test-deps/aoi/nagoyaction/inbox
-          require_head .test-deps/aoi "$AOI_SHA"
-          require_head .test-deps/blueprobe "$BLUEPROBE_SHA"
-          {
-            echo "## Source hashes"
-            echo "- Aoi: ${AOI_SHA}"
-            echo "- BlueProbe: ${BLUEPROBE_SHA}"
-          } >> "$GITHUB_STEP_SUMMARY"
-          check_source .test-deps/blueprobe blueprobe.py
-          check_source .test-deps/blueprobe npb_calendar.py
-          check_source .test-deps/blueprobe npb_team_annual.py
-      - run: uv run --locked --python "${{ matrix.python }}" pytest -q
-        env:
-          NUMPY_MIN_PURE: "1"
-          QUERYU_EXPECT_BACKEND: stdlib
-          AOI_ROOT: ${{ github.workspace }}/.test-deps/aoi
-          PYTHONPATH: ${{ github.workspace }}/.test-deps/blueprobe
 
   failure-identity:
     needs: [changes, test]
@@ -351,7 +257,7 @@ jobs:
       actions: read
     uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-junit-identity.yml@9e3da7ae1846e9604ebc24bb5178f7de094a4e77
     with:
-      expected-reports: '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml"]'
+      expected-reports: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.11/junit.xml","junit-pure-py3.14/junit.xml","junit-pure-py3.15/junit.xml"]' || '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.14/junit.xml"]' }}
       artifact-pattern: junit-*
       output-artifact: failure-identity
       commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}
