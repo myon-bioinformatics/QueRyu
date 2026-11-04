@@ -8,6 +8,8 @@ requires-python = ">=3.11"
 dependencies = []
 
 [dependency-groups]
+# Opt-in cache/HTTP tests only; the default dev group keeps the NumPy oracle.
+cache-test = ["pytest>=9.1.1"]
 # numpy はテストで numpy_min の結果と突き合わせるためだけに使う。
 dev = ["pytest>=9.1.1", "numpy>=2.4.6"]
 

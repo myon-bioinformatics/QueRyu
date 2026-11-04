@@ -231,6 +231,9 @@ version = "0.1.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
+cache-test = [
+    { name = "pytest" },
+]
 dev = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -240,6 +243,7 @@ dev = [
 [package.metadata]
 
 [package.metadata.requires-dev]
+cache-test = [{ name = "pytest", specifier = ">=9.1.1" }]
 dev = [
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "pytest", specifier = ">=9.1.1" },

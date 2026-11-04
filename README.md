@@ -216,6 +216,10 @@ AOI_ROOT=../Aoi PYTHONPATH=../BlueProbe uv run --locked pytest -q
 
 CI does the same on Python 3.11–3.15.
 
+For only the existing offline cache and local HTTP tests, the optional
+[`cache-test` profile](docs/nano-cache-tests.md) avoids installing NumPy.
+It is not a replacement for the full suite or the NumPy comparison tests.
+
 ## Relationship with Aoi
 
 A repository split out from [Aoi](https://github.com/myon-bioinformatics/Aoi)'s [`queryu/`](https://github.com/myon-bioinformatics/Aoi/tree/main/queryu). Its direct parent is Aoi, and differences from `queryu/` are checked on the Aoi side.
