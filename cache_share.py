@@ -63,7 +63,8 @@ def query(cache: Cache, *, key: str | None = None, url: str | None = None, group
     statuses = None if status is None else ({status} if isinstance(status, int) else set(status))
     start, end = _time(since), _time(until)
     out = []
-    for row in _rows(cache):
+    latest = {}
+    for position, row in enumerate(_rows(cache)):
         if with_body and row.get("status") not in (200, 404):
             continue
         if key is not None and not fnmatch.fnmatchcase(str(row.get("key", "")), key):
@@ -78,13 +79,13 @@ def query(cache: Cache, *, key: str | None = None, url: str | None = None, group
             fetched = _time(row.get("fetched_at")) if row.get("fetched_at") else None
             if fetched is None or (start and fetched < start) or (end and fetched > end):
                 continue
-        out.append(row)
+        if history:
+            out.append(row)
+        else:
+            latest[row["key"]] = (position, row)
     if history:
         return out
-    latest = {}
-    for row in out:
-        latest[row["key"]] = row
-    return [row for row in out if latest[row["key"]] is row]
+    return [row for _, row in sorted(latest.values(), key=lambda item: item[0])]
 
 
 def export_bundle(cache: Cache, entries: list[dict], path: Path) -> dict:
