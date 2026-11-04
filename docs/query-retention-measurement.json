@@ -1,0 +1,19 @@
+{
+  "baseline_sha": "4c59cb00ca2ba898573e4af95bc4a63492aa5eb9",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "rows": 100000,
+  "keys": 100,
+  "peak_bytes": {
+    "baseline": [
+      806776,
+      806688,
+      806688
+    ],
+    "current": [
+      14040,
+      8608,
+      8608
+    ]
+  },
+  "scope": "query temporary allocations; manifest parsing and source rows excluded"
+}
