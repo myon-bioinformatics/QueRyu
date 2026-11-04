@@ -1,0 +1,412 @@
+{
+  "schema": "queryu-cache-profile-measurement/1",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "source_commits": {
+    "QueRyu": "ac6ceebab09be3b4225d39a4d741544fc9731eea",
+    "Aoi": "157c67ce8b6f49008ad1063f1727f433d7ce4ab3",
+    "BlueProbe": "2ea993aaa1416ff9006eba4ebe2fed6d0b49668e"
+  },
+  "python": "Python 3.15.1",
+  "uv": "uv 0.13.5 (x86_64-unknown-linux-gnu)",
+  "selected_tests": [
+    "tests/test_cache_core.py",
+    "tests/test_cache_snapshots.py",
+    "tests/test_queryu_cache_share.py",
+    "tests/test_urllib_client.py",
+    "tests/test_query_retention.py"
+  ],
+  "pyproject_sha256": "cdc473ddd5a4a6b088c45d433158af1d3699f0007e011346626679719a201176",
+  "lock_sha256": "bab479f9880c72954feecc4ae1393acc745d63f72ad53cc185d0847680564595",
+  "all_observations_identical": true,
+  "all_output_hashes_identical": true,
+  "medians": {
+    "full": {
+      "install_seconds": 3.5614968720037723,
+      "test_process_seconds": 3.2402676260026055,
+      "venv_regular_file_bytes_before_tests": 63005411,
+      "cache_regular_file_bytes_after_install": 62978042
+    },
+    "nano": {
+      "install_seconds": 3.673732460003521,
+      "test_process_seconds": 3.3230228060056106,
+      "venv_regular_file_bytes_before_tests": 6616901,
+      "cache_regular_file_bytes_after_install": 6589084
+    }
+  },
+  "collection_ids": [
+    "tests/test_cache_core.py::test_cache_core_runs_alone_and_rejects_tampering",
+    "tests/test_cache_snapshots.py::test_each_acquisition_keeps_its_own_body_and_manifest",
+    "tests/test_cache_snapshots.py::test_identical_bodies_deduplicate_without_deduplicating_acquisitions",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-None]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-000000000000000000000000000000000000000000000000000000000000000]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-00000000000000000000000000000000000000000000000000000000000000000]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[sha256-123]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes-None]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes--1]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes-True]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes-False]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes-3.0]",
+    "tests/test_cache_snapshots.py::test_malformed_recorded_metadata_is_rejected[bytes-3]",
+    "tests/test_cache_snapshots.py::test_missing_legacy_metadata_cannot_be_backfilled_from_body[sha256]",
+    "tests/test_cache_snapshots.py::test_missing_legacy_metadata_cannot_be_backfilled_from_body[bytes]",
+    "tests/test_cache_snapshots.py::test_raw_integrity_checked_before_utf8_decode[\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff\\xff-sha256]",
+    "tests/test_cache_snapshots.py::test_raw_integrity_checked_before_utf8_decode[\\xff-bytes]",
+    "tests/test_cache_snapshots.py::test_corrupt_existing_blob_is_never_repaired_or_recorded",
+    "tests/test_cache_snapshots.py::test_atomic_publish_loser_verifies_winning_blob",
+    "tests/test_cache_snapshots.py::test_atomic_publish_rejects_corrupt_racing_blob",
+    "tests/test_cache_snapshots.py::test_failed_publish_cleans_temporary_without_acquisition",
+    "tests/test_cache_snapshots.py::test_valid_legacy_survives_new_put_without_migration",
+    "tests/test_cache_snapshots.py::test_overwritten_legacy_fails_offline_without_network",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[../outside.gz]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[sub/../../outside.gz]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[/tmp/outside.gz]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[C:\\\\outside.gz]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[a\\\\..\\\\outside.gz]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[.]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[None]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[4]",
+    "tests/test_cache_snapshots.py::test_unsafe_paths_are_rejected[a\\x00b]",
+    "tests/test_cache_snapshots.py::test_symlink_escape_rejected_on_read_and_publication",
+    "tests/test_cache_snapshots.py::test_snapshot_keeps_unicode_and_complete_detached_provenance",
+    "tests/test_cache_snapshots.py::test_snapshot_unknown_acquisition_metadata_stays_unknown",
+    "tests/test_cache_snapshots.py::test_verified_non_utf8_body_is_available_only_as_bytes",
+    "tests/test_cache_snapshots.py::test_existing_dangling_blob_is_not_repaired",
+    "tests/test_cache_snapshots.py::test_hash_and_length_collision_still_checks_actual_bytes",
+    "tests/test_queryu_cache_share.py::test_query_filters_latest_and_history",
+    "tests/test_queryu_cache_share.py::test_bundle_round_trip_and_idempotent_import",
+    "tests/test_queryu_cache_share.py::test_bundle_tampering_is_rejected",
+    "tests/test_queryu_cache_share.py::test_async_snapshots_keep_order",
+    "tests/test_queryu_cache_share.py::test_fetch_many_parallel_hosts_serial_within_host",
+    "tests/test_queryu_cache_share.py::test_bundle_rejects_unsafe_members",
+    "tests/test_queryu_cache_share.py::test_cli_query_export_import",
+    "tests/test_queryu_cache_share.py::test_verify_cache_clean_and_corrupted",
+    "tests/test_urllib_client.py::test_status_body_and_case_insensitive_headers",
+    "tests/test_urllib_client.py::test_304_404_and_5xx_are_responses_not_exceptions",
+    "tests/test_urllib_client.py::test_redirect_is_followed",
+    "tests/test_urllib_client.py::test_polite_fetcher_with_real_urllib_conditional_get_and_cache",
+    "tests/test_urllib_client.py::test_response_text_and_headers_mapping",
+    "tests/test_query_retention.py::QueryRetentionTests::test_latest_order_filters_and_history"
+  ],
+  "pytest_external_plugins": [],
+  "output_sha256": {
+    "bundle.tar": "fce96a6822135a6fc04ac3c45b7a3c0dce1c8b3da9ac8de84d9b266fd67958f3",
+    "cache/blobs/0e930c34fc8ed8f6adfab6ca883e2f133e79c1ba057017c6b996955a5105ef0a.html.gz": "73d8f12c8309b2b4bfd6e4d39c3155b8420a68d0f2c9658758400bddda45e68d",
+    "cache/blobs/7427f667658f019533eb7847125f49cf50ec7741a150b463cbecf3b138e5d890.html.gz": "e885cc85f990cbdd3b2eded4cec57d5c9724554a1299dbf1c2580b11382d2c90",
+    "cache/blobs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.html.gz": "ac73670af3abed54ac6fb4695131f4099be9fbe39d6076c5d0264a6bbdae9d83",
+    "cache/manifest.jsonl": "d3eb7da8c530bd12ad6420370f2cefac669068d59e1b2e537d9fc4442701b61e",
+    "imported/blobs/0e930c34fc8ed8f6adfab6ca883e2f133e79c1ba057017c6b996955a5105ef0a.html.gz": "73d8f12c8309b2b4bfd6e4d39c3155b8420a68d0f2c9658758400bddda45e68d",
+    "imported/blobs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.html.gz": "ac73670af3abed54ac6fb4695131f4099be9fbe39d6076c5d0264a6bbdae9d83",
+    "imported/manifest.jsonl": "98f0995351d1c62d117226403fd4bed333bb10711c557c74d534108a75cb31b5",
+    "output.json": "169963de3062e3850aba6182ecbb8b3e647ea1af6e1ea26c30533182dbc11c92"
+  },
+  "samples": [
+    {
+      "trial": 1,
+      "mode": "full",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15"
+      ],
+      "install_seconds": 4.60037189200375,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "numpy",
+          "2.5.4"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 63005411,
+      "cache_regular_file_bytes_after_install": 62978042,
+      "test_process_seconds": 3.2627498529982404,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    },
+    {
+      "trial": 1,
+      "mode": "nano",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15",
+        "--only-group",
+        "cache-test"
+      ],
+      "install_seconds": 3.673732460003521,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 6616901,
+      "cache_regular_file_bytes_after_install": 6589084,
+      "test_process_seconds": 3.4899082029951387,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    },
+    {
+      "trial": 2,
+      "mode": "nano",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15",
+        "--only-group",
+        "cache-test"
+      ],
+      "install_seconds": 3.4973264139989624,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 6616901,
+      "cache_regular_file_bytes_after_install": 6589084,
+      "test_process_seconds": 3.3230228060056106,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    },
+    {
+      "trial": 2,
+      "mode": "full",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15"
+      ],
+      "install_seconds": 3.300161440994998,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "numpy",
+          "2.5.4"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 63005411,
+      "cache_regular_file_bytes_after_install": 62978042,
+      "test_process_seconds": 3.2402676260026055,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    },
+    {
+      "trial": 3,
+      "mode": "full",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15"
+      ],
+      "install_seconds": 3.5614968720037723,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "numpy",
+          "2.5.4"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 63005411,
+      "cache_regular_file_bytes_after_install": 62978042,
+      "test_process_seconds": 3.2197293839999475,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    },
+    {
+      "trial": 3,
+      "mode": "nano",
+      "sync_command": [
+        "uv",
+        "sync",
+        "--locked",
+        "--python",
+        "python3.15",
+        "--only-group",
+        "cache-test"
+      ],
+      "install_seconds": 13.104550031996041,
+      "install_exitcode": 0,
+      "packages": [
+        [
+          "Pygments",
+          "2.21.0"
+        ],
+        [
+          "iniconfig",
+          "2.3.1"
+        ],
+        [
+          "packaging",
+          "26.3"
+        ],
+        [
+          "pluggy",
+          "1.7.0"
+        ],
+        [
+          "pytest",
+          "9.1.1"
+        ]
+      ],
+      "venv_regular_file_bytes_before_tests": 6616901,
+      "cache_regular_file_bytes_after_install": 6589084,
+      "test_process_seconds": 3.192375231999904,
+      "test_exitcode": 0,
+      "output_exitcode": 0,
+      "pip_check_exitcode": 0,
+      "collected_tests": 56,
+      "passed_phase_reports": 168,
+      "skipped_tests": 0
+    }
+  ],
+  "measurement_notes": [
+    "fresh venv and separate empty uv cache per sample",
+    "Python and source acquisition excluded",
+    "shared Python/stdlib and symlink targets excluded from regular-file bytes",
+    "venv/cache hardlinks may share physical storage; do not sum sizes",
+    "OS/CDN cache and host load uncontrolled; an independent 6.48-second full-suite validation overlapped the beginning of the first full install",
+    "same final source and root pytest configuration in both modes",
+    "PYTHONDONTWRITEBYTECODE=1 in both modes",
+    "all six install/test samples retained, including the 13.105-second final nano install; no retries",
+    "initial offline lock preparation failed for uncached Python-3.11 NumPy metadata; online lock preparation succeeded without third-party lock changes"
+  ],
+  "superseded_pass": {
+    "source_commits": {
+      "QueRyu": "4c59cb00ca2ba898573e4af95bc4a63492aa5eb9",
+      "Aoi": "157c67ce8b6f49008ad1063f1727f433d7ce4ab3",
+      "BlueProbe": "2ea993aaa1416ff9006eba4ebe2fed6d0b49668e"
+    },
+    "selected_test_count": 55,
+    "fresh_environments": 6,
+    "full_default_suite_passed": 200,
+    "superseded_reason": "PR #33 merged after the original baseline; reran on current main and included its new cache query retention regression. Timing comparisons above use only current-main samples."
+  }
+}
