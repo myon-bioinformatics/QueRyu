@@ -10,7 +10,7 @@ Run `python -S -m unittest discover -s tests -p test_query_retention.py`.
 The regression checks latest order, glob/status filtering, body-only behavior and
 full history. Full pytest runs in CI.
 
-`python -S scripts/benchmark_query_retention.py` compares the pinned git baseline.
+`python -S -m scripts.benchmark_query_retention` compares the pinned git baseline.
 CPython 3.12.14/Linux, 100000 synthetic parsed rows / 100 keys, three traced runs:
 query-only temporary peak baseline 806776/806688/806688 bytes, current
 14040/8608/8608 bytes. Input rows and parsing allocations excluded. Raw evidence
