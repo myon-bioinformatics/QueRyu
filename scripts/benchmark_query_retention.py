@@ -24,7 +24,8 @@ def main():
                 samples.append(tracemalloc.get_traced_memory()[1])
                 tracemalloc.stop()
             if expected is None: expected=got
-            assert got==expected
+            if not (got==expected):
+                raise SystemExit('benchmark_query_retention: result mismatch')
         result[name]=samples
     print(json.dumps({'baseline_sha':sha,'python':sys.version,'rows':100000,'keys':100,'peak_bytes':result,'scope':'query temporary allocations; manifest parsing and source rows excluded'},indent=2))
 
