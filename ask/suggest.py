@@ -8,14 +8,8 @@
 
 from __future__ import annotations
 
-import argparse
-import json
-import re
-import sys
-import unicodedata
+import argparse, importlib.util, json, re, sys, unicodedata
 from pathlib import Path
-
-import importlib.util
 
 
 def _load_numpy_min():

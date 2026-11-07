@@ -2,9 +2,8 @@
 
 BlueProbe（抽出）は最新 main の BlueProbe checkout を PYTHONPATH で渡す。Aoi の blueprobe/ は使わない。
 """
+import os, sys
 from pathlib import Path
-import os
-import sys
 
 import pytest
 

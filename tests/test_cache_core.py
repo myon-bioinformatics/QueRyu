@@ -1,9 +1,6 @@
 """The distributable core works under python -S outside any checkout."""
-import json
+import json, shutil, subprocess, sys
 from pathlib import Path
-import shutil
-import subprocess
-import sys
 
 
 def test_cache_core_runs_alone_and_rejects_tampering(tmp_path):

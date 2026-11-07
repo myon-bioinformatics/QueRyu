@@ -14,24 +14,7 @@
 
 from __future__ import annotations
 
-import argparse
-import copy
-import datetime as dt
-import email.message
-import gzip
-import hashlib
-import importlib.util
-import json
-import math
-import os
-import re
-import subprocess
-import sys
-import tempfile
-import time
-import urllib.error
-import urllib.request
-import zlib
+import argparse, copy, datetime as dt, email.message, gzip, hashlib, importlib.util, json, math, os, re, subprocess, sys, tempfile, time, urllib.error, urllib.request, zlib
 from pathlib import Path
 
 UA = "Aoi-QueRyu/0.1 (+https://github.com/myon-bioinformatics/Aoi; personal research)"
