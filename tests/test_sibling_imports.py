@@ -3,11 +3,8 @@
 BlueProbe は最新 main の checkout を PYTHONPATH で渡す。隣の ``blueprobe/`` を読むのは、親が Aoi の checkout
 （pyproject.toml と cycles/ がある）のときだけで、その処理は ``queryu.aoi_sibling_path`` 一か所に限る。
 """
-import ast
-import os
+import ast, os, subprocess, sys
 from pathlib import Path
-import subprocess
-import sys
 
 import pytest
 

@@ -1,10 +1,5 @@
-import json
-from pathlib import Path
-import subprocess
-import sys
-import tracemalloc
-import types
-from unittest.mock import patch
+import json, subprocess, sys, tracemalloc, types
+from pathlib import Path; from unittest.mock import patch
 import cache_share
 
 

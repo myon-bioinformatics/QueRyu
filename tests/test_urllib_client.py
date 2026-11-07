@@ -1,8 +1,6 @@
 """標準ライブラリ（urllib）の取得。127.0.0.1 の一時サーバーだけを使い、外のネットワークには出ない。"""
+import json, threading, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
-import threading
-import urllib.request
 
 import pytest
 

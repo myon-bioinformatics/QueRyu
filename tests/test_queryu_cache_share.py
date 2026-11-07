@@ -1,10 +1,5 @@
 """cache_share: query the manifest, hand caches over as bundles, supply snapshots, fetch politely in parallel."""
-import asyncio
-import io
-import json
-import tarfile
-import threading
-import time
+import asyncio, io, json, tarfile, threading, time
 
 import pytest
 
