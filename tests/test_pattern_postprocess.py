@@ -1,7 +1,6 @@
 """抽出後の並べ替え・絞り込み。パターン表と検出は BlueProbe に聞く。"""
 
-import ast
-import json
+import ast, json
 from pathlib import Path
 
 import pytest

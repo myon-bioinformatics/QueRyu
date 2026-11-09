@@ -1,9 +1,6 @@
 """Verified, immutable cache evidence; all fixtures are local and offline."""
 
-import gzip
-import hashlib
-import json
-import os
+import gzip, hashlib, json, os
 from pathlib import Path
 
 import pytest

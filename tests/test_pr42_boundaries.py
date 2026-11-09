@@ -1,6 +1,5 @@
 """Independent review probes: no NPB traffic and no persistent user state."""
-import datetime as dt
-import json
+import datetime as dt, json
 from types import SimpleNamespace
 
 import pytest

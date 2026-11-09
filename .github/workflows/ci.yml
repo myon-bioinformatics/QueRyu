@@ -227,10 +227,16 @@ jobs:
           check_source .test-deps/blueprobe npb_team_annual.py
       - name: Install LAPACK/BLAS for numpy_min
         if: matrix.backend == 'lapack'
+        # 17 s per lane: `apt-get update` was 6 s of it, the 3 MB download under 1 s.
+        # The runner image's lists already name these release-pocket packages, so try
+        # without `update` first and fall back to it only if that install fails.
+        # needrestart only reported deferred service restarts here, so it is suspended.
+        env:
+          NEEDRESTART_SUSPEND: "1"
         run: |
           set -euo pipefail
-          sudo apt-get update -q
-          sudo apt-get install -y -q liblapack3 libblas3
+          install() { sudo --preserve-env=NEEDRESTART_SUSPEND apt-get install -y -q liblapack3 libblas3; }
+          install || { sudo apt-get update -q && install; }
       - run: python -m compileall -q -x '\.test-deps' .
       - run: uv run --locked --python "${{ matrix.python }}" pytest -q --junitxml=reports/junit.xml
         env:
