@@ -7,10 +7,8 @@ Known answers and the inbox cache share one key:
 The directory is chosen by the caller. This module does not assume a sibling
 folder named ``known``.
 """
-from dataclasses import asdict
-import hashlib
-import json
-from pathlib import Path
+import hashlib, json
+from dataclasses import asdict; from pathlib import Path
 from ask import ASKS, FORMS, Query, answer, load
 
 RESULT_FILES = ("sets.jsonl", "propositions.jsonl")

@@ -1,9 +1,5 @@
 """emoji_data: npm acquisition with integrity and provenance, offline reuse, accumulated names."""
-import base64
-import hashlib
-import io
-import json
-import tarfile
+import base64, hashlib, io, json, tarfile
 from pathlib import Path
 
 import pytest

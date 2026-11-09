@@ -1,9 +1,7 @@
 """取得の礼儀（負荷）と来歴の記録。ネットワークには出ず、HandlerClient で応答を作る。"""
 
-import json
+import json, urllib.request
 from pathlib import Path
-
-import urllib.request
 
 import pytest
 
