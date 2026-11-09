@@ -5,15 +5,7 @@ No HTTP client, acquisition planner, frozen-season file or Aoi layout is require
 """
 from __future__ import annotations
 
-import copy
-import datetime as dt
-import gzip
-import hashlib
-import json
-import os
-import re
-import tempfile
-import zlib
+import copy, datetime as dt, gzip, hashlib, json, os, re, tempfile, zlib
 from pathlib import Path
 
 __all__ = ["Cache", "CacheIntegrityError"]

@@ -11,14 +11,8 @@
 
 from __future__ import annotations
 
-import argparse
-import json
-import math
-import re
-import sys
-import unicodedata
-from dataclasses import asdict, dataclass, field
-from pathlib import Path
+import argparse, json, math, re, sys, unicodedata
+from dataclasses import asdict, dataclass, field; from pathlib import Path
 
 FORMS = {"original": "元の命題", "contrapositive": "対偶", "converse": "逆", "inverse": "裏"}
 RATE_FORMS = {"original": "元", "contrapositive": "対偶", "converse": "逆", "inverse": "裏"}

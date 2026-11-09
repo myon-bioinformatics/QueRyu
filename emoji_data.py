@@ -21,16 +21,7 @@ variant missing from both is named from its base and components
 """
 from __future__ import annotations
 
-import argparse
-import base64
-import hashlib
-import io
-import json
-import re
-import sys
-import tarfile
-import urllib.parse
-import urllib.request
+import argparse, base64, hashlib, io, json, re, sys, tarfile, urllib.parse, urllib.request
 from pathlib import Path
 
 from cache_core import Cache

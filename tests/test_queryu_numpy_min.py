@@ -3,14 +3,8 @@
 numpy は dev 依存で、ここで突き合わせるためだけに使う。NUMPY_MIN_PURE=1 で stdlib 経路も確かめる。
 """
 
-import ast
-import hashlib
-import importlib.util
-import json
-import os
+import ast, hashlib, importlib.util, json, os, subprocess, sys
 from pathlib import Path
-import subprocess
-import sys
 
 import numpy
 import pytest

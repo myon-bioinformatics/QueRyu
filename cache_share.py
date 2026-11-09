@@ -14,17 +14,7 @@
 """
 from __future__ import annotations
 
-import asyncio
-import datetime as dt
-import fnmatch
-import gzip
-import hashlib
-import io
-import json
-import tarfile
-import threading
-import time
-import urllib.parse
+import asyncio, datetime as dt, fnmatch, gzip, hashlib, io, json, tarfile, threading, time, urllib.parse
 from pathlib import Path
 
 from cache_core import Cache, CacheIntegrityError

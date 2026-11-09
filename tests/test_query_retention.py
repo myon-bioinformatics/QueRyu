@@ -1,7 +1,5 @@
-import sys
-from pathlib import Path
-import unittest
-from unittest.mock import patch
+import sys, unittest
+from pathlib import Path; from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import cache_share
 

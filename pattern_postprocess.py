@@ -9,14 +9,8 @@ blueprobe はパッケージではないので、``from blueprobe import ...`` �
 
 from __future__ import annotations
 
-import argparse
-import json
-import re
-import sys
-import unicodedata
-from decimal import Decimal, InvalidOperation
-from pathlib import Path
-from typing import Any
+import argparse, json, re, sys, unicodedata
+from decimal import Decimal, InvalidOperation; from pathlib import Path; from typing import Any
 
 from blueprobe import detect_pattern, get_pattern
 
