@@ -25,7 +25,7 @@ jobs:
       contents: read
     uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-change-detection.yml@9e3da7ae1846e9604ebc24bb5178f7de094a4e77
 
-  deps:
+  resolve-vendor:
     name: Resolve Aoi and BlueProbe
     needs: changes
     if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
@@ -128,7 +128,7 @@ jobs:
 
   test:
     if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-    needs: [changes, deps]
+    needs: [changes, resolve-vendor]
     name: ${{ matrix.backend == 'pure' && 'pytest numpy_min NUMPY_MIN_PURE forced' || 'pytest' }} (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
     # NUMPY_MIN_PURE で stdlib 経路を強制した lane は遅い（実データの SVD が数分かかる）
@@ -156,19 +156,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/Aoi
-          ref: ${{ needs.deps.outputs.aoi_sha }}
+          ref: ${{ needs.resolve-vendor.outputs.aoi_sha }}
           path: .test-deps/aoi
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/BlueProbe
-          ref: ${{ needs.deps.outputs.blueprobe_sha }}
+          ref: ${{ needs.resolve-vendor.outputs.blueprobe_sha }}
           path: .test-deps/blueprobe
           persist-credentials: false
       - name: Verify resolved checkouts
         env:
-          AOI_SHA: ${{ needs.deps.outputs.aoi_sha }}
-          BLUEPROBE_SHA: ${{ needs.deps.outputs.blueprobe_sha }}
+          AOI_SHA: ${{ needs.resolve-vendor.outputs.aoi_sha }}
+          BLUEPROBE_SHA: ${{ needs.resolve-vendor.outputs.blueprobe_sha }}
         run: |
           set -euo pipefail
           strict=0
