@@ -39,6 +39,10 @@ This repository was split out from the [Aoi](https://github.com/myon-bioinformat
 
 ## Installation and usage
 
+### Single-file entry (experimental)
+
+`python scripts/build_single_file.py dist-single/queryu.py` generates a `queryu.py` containing the canonical `cache_core.py` classes. The generated file supports `--help` and the offline cache API without a checkout. To execute dataset commands, place `blueprobe.py` and the required source module alongside it; for example, `npb_calendar.py` is needed for `--source npb_calendar`. The default freeze-list path is beside the generated file. Building the entry does not install a uv tool or include source modules. Regenerate it when either input changes.
+
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). There are no runtime dependencies: `ask/suggest.py` uses `vendor/aoi/shrink/numpy_min.py`, vendored from Aoi and pinned in `vendor.lock.json` (it uses the system LAPACK/BLAS through ctypes when present and falls back to the standard library). numpy is a dev dependency, used only to compare results in tests.
 Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used.
 

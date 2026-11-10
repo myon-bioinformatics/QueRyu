@@ -353,8 +353,6 @@ def format_plan(plan: dict) -> str:
 
 
 def main(argv=None) -> int:
-    from blueprobe import NORMALIZATION, load_source
-
     ap = argparse.ArgumentParser(description="取得元からページを集め、観測データセットを作る")
     ap.add_argument("--source", required=True)
     ap.add_argument("--years", required=True, help="例: 2012-2025")
@@ -371,6 +369,13 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     if not args.plan and args.out is None:
         ap.error("--out が要る")
+
+    try:
+        from blueprobe import NORMALIZATION, load_source
+    except ModuleNotFoundError as exc:
+        if exc.name != "blueprobe":
+            raise
+        ap.exit(2, "BlueProbe が必要です。blueprobe.py と取得元モジュールを配置し、PYTHONPATH で指定してください。\n")
 
     source = load_source(args.source)
     years = _years(args.years)
