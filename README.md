@@ -297,3 +297,13 @@ The main target and pass criteria are 2013–2026. Years before 2013 are optiona
 Verification and copying of the annual cache's main target (formerly `annual_scope.py`) is NPB-specific, so it moved to Aoi's `annual_scope.py`.
 The dataset manifest also records `source_code_sha256` of the source module itself used for parsing.
 Range, verification, and re-runs are in [c001's fetch and synthetic verification record](https://github.com/myon-bioinformatics/Aoi/blob/main/cycles/c001-chunichi/annual-history-synthetic.md).
+
+### Explicit research pattern compatibility
+
+`pattern_postprocess` keeps BlueProbe's generic auto-detection unchanged. Explicit
+`npb_calendar` / `npb_linescore` keys use the optional `npb_patterns` research
+module when absent from the generic BlueProbe API. Put BlueProbe's `npb/` alongside
+its root on `PYTHONPATH` (or use Aoi's launcher). This does not register NPB patterns
+globally. Key-only and key-plus-HTML inputs retain metadata-only selection; they do
+not claim a matching DOM node. Older BlueProbe versions with these keys built in
+continue to work without the optional module.

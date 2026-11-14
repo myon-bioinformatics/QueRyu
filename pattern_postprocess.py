@@ -19,12 +19,29 @@ SORT_MODES = {"alphabetical", "numeric"}
 FILTER_OPS = {"contains", "equals", "startswith", "endswith", "regex", "not_contains"}
 
 
+def _requested_pattern(key: str) -> dict[str, Any]:
+    """Use optional research metadata only for an explicitly requested NPB key."""
+    try:
+        return get_pattern(key)
+    except ValueError as original_error:
+        if not isinstance(key, str) or not key.strip().lower().startswith("npb_"):
+            raise
+        try:
+            from npb_patterns import get_pattern as research_pattern
+        except ModuleNotFoundError as exc:
+            if exc.name != "npb_patterns":
+                raise
+            raise original_error from None
+        from copy import deepcopy
+        return deepcopy(research_pattern(key))
+
+
 def pattern_for_html(html: str, pattern_key: str | None = None) -> dict[str, Any]:
     """BlueProbe にパターンを聞く。一致しない、または未知のキーは例外のまま返す。"""
     if not isinstance(html, str):
         raise TypeError("html は文字列である必要があります")
     if pattern_key not in (None, "", "auto"):
-        pattern = get_pattern(pattern_key)
+        pattern = _requested_pattern(pattern_key)
         return {
             "pattern_key": pattern["key"],
             "selector": pattern["selector"],
@@ -204,7 +221,7 @@ def process(
     elif html_value is not None:
         raise TypeError("html は文字列である必要があります")
     elif key not in (None, "", "auto"):
-        found = get_pattern(key)
+        found = _requested_pattern(key)
         pattern = {
             "pattern_key": found["key"],
             "selector": found["selector"],
