@@ -144,11 +144,14 @@ def aoi_sibling_path(here: Path, module: str, sibling: str = "blueprobe") -> Non
 
 
 class PoliteFetcher:
-    def __init__(self, cache: Cache, wait: float = 3.0, *, offline: bool = False, client=None):
+    def __init__(self, cache: Cache | None, wait: float = 3.0, *, offline: bool = False, client=None):
+        """cache が None なら、取ったページはその実行の中だけで使い、どこにも書かない。"""
+        if cache is None and offline:
+            raise ValueError("オフラインで読むにはキャッシュが要る")
         self.cache, self.wait, self.offline = cache, wait_seconds(wait), offline
         self._client = client
         self.requests = 0
-        self._latest = cache.latest()
+        self._latest = cache.latest() if cache is not None else {}
 
     @property
     def client(self):
@@ -183,7 +186,8 @@ class PoliteFetcher:
         if r.status_code not in (200, 404):
             r.raise_for_status()
         content = r.content if r.status_code == 200 else b""  # 存在しないページも「空」として覚える
-        self._latest[key] = self.cache.put(key, url, group, r.status_code, content, r.headers)
+        if self.cache is not None:
+            self._latest[key] = self.cache.put(key, url, group, r.status_code, content, r.headers)
         return content.decode("utf-8")
 
 
@@ -276,9 +280,14 @@ def live_groups(years: list[int], today: dt.date, frozen: set[int]) -> set[str]:
 
 
 def month_key_pattern(value: str | re.Pattern | None) -> re.Pattern | None:
-    """Compile a month-key regex; it must define the named groups ``year`` and ``month``."""
+    """Compile a month-key regex; it must define the named groups ``year`` and ``month``.
+
+    引用符なしで書ける形も受ける: ``YYYY_MM`` のように YYYY（4桁の年）と MM（2桁の月）を置いた見本。
+    """
     if value is None or isinstance(value, re.Pattern) and {"year", "month"} <= set(value.groupindex):
         return value
+    if "(?P<" not in value and "YYYY" in value and "MM" in value:
+        value = re.escape(value).replace("YYYY", r"(?P<year>\d{4})", 1).replace("MM", r"(?P<month>\d{2})", 1)
     pattern = re.compile(value)
     if not {"year", "month"} <= set(pattern.groupindex):
         raise ValueError("月の key の正規表現には (?P<year>...) と (?P<month>...) が要る")
@@ -298,11 +307,11 @@ def split_future_months(pages, today: dt.date, month_key: str | re.Pattern | Non
     return kept, future
 
 
-def acquisition_plan(pages, cache: Cache, *, live: set[str], wait: float, today: dt.date,
+def acquisition_plan(pages, cache: Cache | None, *, live: set[str], wait: float, today: dt.date,
                      frozen: set[int], future, offline: bool = False) -> dict:
-    """キャッシュの来歴だけで、取得の内訳を数える。ネットワークには出ない。"""
+    """キャッシュの来歴だけで、取得の内訳を数える。ネットワークには出ない。キャッシュなしなら全部が新規。"""
     wait = wait_seconds(wait)
-    latest = cache.latest()
+    latest = cache.latest() if cache is not None else {}
     cached = conditional = unconditional = new = 0
     for key, _url, group in pages:
         if key in latest and (offline or group not in live):
@@ -356,17 +365,21 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="取得元からページを集め、観測データセットを作る")
     ap.add_argument("--source", required=True)
     ap.add_argument("--years", required=True, help="例: 2012-2025")
-    ap.add_argument("--cache", type=Path, required=True)
+    ap.add_argument("--cache", type=Path, default=None,
+                    help="生ページのキャッシュ。省略時は取ったページをこの実行の中だけで使い、何も書かない")
     ap.add_argument("--out", type=Path, default=None, help="観測データセット。--plan では使わない")
     ap.add_argument("--wait", type=wait_seconds, default=3.0, help="リクエスト間隔（0以上の有限の秒数）")
     ap.add_argument("--offline", action="store_true", help="キャッシュだけで作る。ネットワークに出ない")
     ap.add_argument("--today", default=None, help="未来の月の判定に使う日付（YYYY-MM-DD）。省略すると実行日")
     ap.add_argument("--month-key", default=None,
-                    help="月のページの key の正規表現（名前付きの year・month）。省略時は未来の月を分けない")
+                    help="月のページの key。YYYY_MM のような見本（引用符なしで書ける）か、名前付きの year・month を持つ正規表現。"
+                         "省略時は未来の月を分けない")
     ap.add_argument("--frozen", type=Path, default=None, help="手動の凍結リスト JSON。省略時は queryu/frozen_seasons.json")
     ap.add_argument("--freeze", action="append", default=[], type=int, help="この年を凍結リストに足す。--plan では書き出さない")
     ap.add_argument("--plan", action="store_true", help="取得せず、キャッシュ済み・条件付きGET・新規の件数と待ち時間の見積もりを出す")
     args = ap.parse_args(argv)
+    if args.offline and args.cache is None:
+        ap.error("--offline は --cache と使う（読むキャッシュがない）")
     if not args.plan and args.out is None:
         ap.error("--out が要る")
 
@@ -398,10 +411,11 @@ def main(argv=None) -> int:
     live = live_groups(years, today, frozen)
     pages, future = split_future_months(source.pages(years), today, month_key)
     if args.plan:
-        print(format_plan(acquisition_plan(pages, Cache(args.cache), live=live, wait=args.wait,
+        cache = Cache(args.cache) if args.cache is not None else None
+        print(format_plan(acquisition_plan(pages, cache, live=live, wait=args.wait,
                                            today=today, frozen=frozen, future=future, offline=args.offline)))
         return 0
-    fetcher = PoliteFetcher(Cache(args.cache), args.wait, offline=args.offline)
+    fetcher = PoliteFetcher(Cache(args.cache) if args.cache is not None else None, args.wait, offline=args.offline)
     groups = build(source, pages, fetcher, live)
 
     records, counts, unknown = [], {}, 0
@@ -425,7 +439,7 @@ def main(argv=None) -> int:
         "source": args.source, "scope": {"years": [years[0], years[-1]]},
         "source_code_sha256": hashlib.sha256(Path(source.__file__).read_bytes()).hexdigest(),
         "normalization": NORMALIZATION, "dropped": counts, "unknown": unknown,
-        "cache_manifest": str(args.cache / "manifest.jsonl"),
+        "cache_manifest": str(args.cache / "manifest.jsonl") if args.cache is not None else None,
     }, rebuilt=rebuilt)
     return 0
 

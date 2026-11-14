@@ -68,7 +68,17 @@ uv sync
 PYTHONPATH=../BlueProbe uv run python queryu.py --help
 ```
 
-The main arguments of `queryu.py` are `--source`, `--years`, `--cache`, `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`. An example of building a dataset is under "Datasets" below.
+The main arguments of `queryu.py` are `--source`, `--years`, `--cache`, `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`.
+
+- `--cache` is optional. Without it, fetched pages are used for that run only and nothing is written (`--offline` needs `--cache`). The cache location is the caller's choice (Aoi's pipeline passes `data/raw/<source>`).
+- `--month-key` takes a template that needs no shell quotes, such as `YYYY_MM` (YYYY = 4-digit year, MM = 2-digit month), or a regex with named `year` / `month` groups.
+
+`ask/ask.py` takes the question as plain words, with no quotes, in any order with the options. Without a question it reads one question per line from standard input (a pipe or a FIFO) and answers them in order (`--json`: one JSON object per line). `--query -` reads the Query JSON from standard input.
+
+```bash
+python ask/ask.py P1 の判例は？ --results out
+mkfifo q && python ask/ask.py --results out --json < q &   # then: echo "P1 の判例は？" > q
+``` An example of building a dataset is under "Datasets" below.
 
 ## Layout
 

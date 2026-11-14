@@ -1,4 +1,5 @@
 """未来の月、手動の凍結、--plan。NPB には出ない。"""
+import json
 import datetime as dt
 
 import pytest
@@ -122,3 +123,32 @@ def test_month_key_needs_year_and_month_groups_and_none_keeps_every_page():
         queryu.month_key_pattern(r"(?P<year>\d{4})")
     pages = [("2026_11", "u", "2026")]
     assert split_future_months(pages, dt.date(2026, 4, 1)) == (pages, [])
+
+
+def test_without_cache_pages_stay_in_memory_and_nothing_is_written(tmp_path, monkeypatch, capsys):
+    calls = []
+
+    def handler(req):
+        calls.append(str(req.url))
+        return Response(200, text=PAGE) if "index_04" in str(req.url) else Response(404)
+
+    mock_client(monkeypatch, handler)
+    monkeypatch.chdir(tmp_path)
+    out = tmp_path / "games.jsonl"
+    common = ["--source", "npb_calendar", "--month-key", "YYYY_MM", "--years", "2026", "--today", "2026-04-02",
+              "--frozen", str(tmp_path / "frozen.json")]
+    assert main([*common, "--plan"]) == 0
+    assert "新規: 2" in capsys.readouterr().out  # キャッシュなしなら全部が新規
+    assert main([*common, "--out", str(out), "--wait", "0"]) == 0
+    assert len(calls) == 2
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["games.jsonl", "games.manifest.json"]
+    assert json.loads((tmp_path / "games.manifest.json").read_text(encoding="utf-8"))["cache_manifest"] is None
+    with pytest.raises(SystemExit) as exit_info:
+        main([*common, "--plan", "--offline"])
+    assert exit_info.value.code == 2
+
+
+def test_month_key_template_needs_no_quotes():
+    pattern = queryu.month_key_pattern("YYYY_MM")
+    assert pattern.pattern == MONTH_KEY
+    assert pattern.fullmatch("2024_03")["month"] == "03" and pattern.fullmatch("2024_c") is None
