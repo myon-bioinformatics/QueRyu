@@ -51,8 +51,7 @@ python dist-single/queryu.py --help
 To inspect a source without fetching, place `blueprobe.py` and your source module beside the generated file, then use:
 
 ```bash
-python dist-single/queryu.py --source your_source --years 2024 \
-  --cache ./cache --plan --offline
+python dist-single/queryu.py --source your_source --years 2024 --plan --offline
 ```
 
 Replace `your_source` with the name of an available source module. The command reports cache counts and missing pages; it does not fetch or create a dataset. Without BlueProbe the command exits 2 with a placement hint. Actual extraction and fetching need the corresponding source component and, when building a dataset, `--out`.
@@ -68,7 +67,7 @@ uv sync
 PYTHONPATH=../BlueProbe uv run python queryu.py --help
 ```
 
-The main arguments of `queryu.py` are `--source`, `--years`, `--cache`, `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`. An example of building a dataset is under "Datasets" below.
+The main arguments of `queryu.py` are `--source`, `--years`, `--cache` (default `data/raw/<source>`), `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`. An example of building a dataset is under "Datasets" below.
 
 ## Layout
 
@@ -127,7 +126,7 @@ Because it contains raw observations, `data/` is not committed to git.
 
 ```bash
 PYTHONPATH=../BlueProbe uv run python queryu.py --source npb_calendar --years 2012-2025 \
-  --cache data/raw/npb_calendar --out data/observations/npb_calendar/games.jsonl [--offline]
+  --out data/observations/npb_calendar/games.jsonl [--offline]
 ```
 
 When running from Aoi's root, use `uv run python queryu/queryu.py ...`.
