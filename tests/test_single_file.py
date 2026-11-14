@@ -33,11 +33,13 @@ def test_single_file_missing_blueprobe_is_explained(tmp_path):
 
 
 def test_single_file_offline_plan_with_blueprobe(tmp_path):
-    import blueprobe, npb_calendar  # BlueProbe の npb/ でも直下でも、読み込めた場所から写す
+    import blueprobe
+    import npb_calendar
     output = tmp_path / "queryu.py"
     subprocess.run([sys.executable, str(ROOT / "scripts/build_single_file.py"), str(output)], check=True)
     for module in (blueprobe, npb_calendar):
-        shutil.copy2(module.__file__, tmp_path / Path(module.__file__).name)
+        source = Path(module.__file__)
+        shutil.copy2(source, tmp_path / source.name)
     result = subprocess.run([sys.executable, "-I", str(output), "--source", "npb_calendar", "--years", "2024",
                              "--cache", str(tmp_path / "cache"), "--plan", "--offline"], cwd=tmp_path,
                             capture_output=True, text=True)
