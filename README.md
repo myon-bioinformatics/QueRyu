@@ -58,7 +58,7 @@ python dist-single/queryu.py --source your_source --years 2024 \
 Replace `your_source` with the name of an available source module. The command reports cache counts and missing pages; it does not fetch or create a dataset. Without BlueProbe the command exits 2 with a placement hint. Actual extraction and fetching need the corresponding source component and, when building a dataset, `--out`.
 
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). There are no runtime dependencies: `ask/suggest.py` uses `vendor/aoi/shrink/numpy_min.py`, vendored from Aoi and pinned in `vendor.lock.json` (it uses the system LAPACK/BLAS through ctypes when present and falls back to the standard library). numpy is a dev dependency, used only to compare results in tests.
-Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used.
+Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used. QueRyu never looks for a sibling directory itself; inside Aoi, `python aoi.py queryu …` (or `import aoi`) puts Aoi's `blueprobe/` on the path.
 
 ```bash
 git clone https://github.com/myon-bioinformatics/QueRyu.git

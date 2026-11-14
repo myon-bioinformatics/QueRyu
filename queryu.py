@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-import argparse, copy, datetime as dt, email.message, gzip, hashlib, importlib.util, json, math, os, re, subprocess, sys, tempfile, time, urllib.error, urllib.request, zlib
+import argparse, copy, datetime as dt, email.message, gzip, hashlib, json, math, os, re, subprocess, sys, tempfile, time, urllib.error, urllib.request, zlib
 from pathlib import Path
 
 UA = "Aoi-QueRyu/0.1 (+https://github.com/myon-bioinformatics/Aoi; personal research)"
@@ -127,20 +127,6 @@ class HandlerClient:
 
     def get(self, url: str, headers=None) -> Response:
         return self.handler(Request(url, headers))
-
-
-def aoi_sibling_path(here: Path, module: str, sibling: str = "blueprobe") -> None:
-    """``module`` が import できないときだけ、Aoi の checkout の中にある隣の ``sibling/`` を ``sys.path`` に足す。
-
-    単独の QueRyu では足さない（BlueProbe は最新 main の checkout を PYTHONPATH で渡す）。
-    ``../blueprobe`` のような相対の隣を読むのは、親が Aoi（pyproject.toml と cycles/ がある）のときに限る。
-    """
-    if importlib.util.find_spec(module) is not None:
-        return
-    root = here.resolve().parent
-    candidate = root / sibling
-    if (root / "pyproject.toml").is_file() and (root / "cycles").is_dir() and candidate.is_dir():
-        sys.path.insert(0, str(candidate))
 
 
 class PoliteFetcher:
@@ -388,7 +374,7 @@ def main(argv=None) -> int:
     except ModuleNotFoundError as exc:
         if exc.name != "blueprobe":
             raise
-        ap.exit(2, "BlueProbe が必要です。blueprobe.py と取得元モジュールを配置し、PYTHONPATH で指定してください。\n")
+        ap.exit(2, "BlueProbe が必要です。Aoi では python aoi.py queryu …（aoi.py が場所を入れる）、単独では BlueProbe の checkout を PYTHONPATH に渡してください。\n")
 
     source = load_source(args.source)
     years = _years(args.years)
@@ -445,5 +431,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    aoi_sibling_path(here, "blueprobe")
     raise SystemExit(main())
