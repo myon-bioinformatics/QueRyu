@@ -356,7 +356,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="取得元からページを集め、観測データセットを作る")
     ap.add_argument("--source", required=True)
     ap.add_argument("--years", required=True, help="例: 2012-2025")
-    ap.add_argument("--cache", type=Path, required=True)
+    ap.add_argument("--cache", type=Path, default=None, help="生ページのキャッシュ。省略時は data/raw/<source>")
     ap.add_argument("--out", type=Path, default=None, help="観測データセット。--plan では使わない")
     ap.add_argument("--wait", type=wait_seconds, default=3.0, help="リクエスト間隔（0以上の有限の秒数）")
     ap.add_argument("--offline", action="store_true", help="キャッシュだけで作る。ネットワークに出ない")
@@ -367,6 +367,7 @@ def main(argv=None) -> int:
     ap.add_argument("--freeze", action="append", default=[], type=int, help="この年を凍結リストに足す。--plan では書き出さない")
     ap.add_argument("--plan", action="store_true", help="取得せず、キャッシュ済み・条件付きGET・新規の件数と待ち時間の見積もりを出す")
     args = ap.parse_args(argv)
+    args.cache = args.cache or Path("data/raw") / args.source
     if not args.plan and args.out is None:
         ap.error("--out が要る")
 

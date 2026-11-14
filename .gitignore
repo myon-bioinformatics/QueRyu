@@ -4,6 +4,8 @@ __pycache__/
 .test-deps/
 reports/
 build/
+# data/raw/<source> (queryu.py --cache の既定)
+data/
 
 # --- common ignores (shared) ---
 *.py[cod]
