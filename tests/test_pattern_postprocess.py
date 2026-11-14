@@ -5,18 +5,21 @@ from pathlib import Path
 
 import pytest
 
-import pattern_postprocess
-from pattern_postprocess import (
+import blueprobe
+import queryu as pattern_postprocess
+from queryu import (
     filter_table,
     filter_text,
-    main,
+    _post_main as main,
     pattern_for_html,
-    process,
+    _post_process as process,
     sort_table,
     sort_text,
 )
 
-SOURCE = (Path(__file__).resolve().parents[1] / "pattern_postprocess.py").read_text(encoding="utf-8")
+_QUERYU = (Path(__file__).resolve().parents[1] / "queryu.py").read_text(encoding="utf-8")
+# 抽出後の加工（post）の節だけを見る
+SOURCE = _QUERYU[_QUERYU.index("# ──── post "):_QUERYU.index("# ──── tools:")]
 
 
 def test_module_calls_blueprobe_without_a_local_pattern_table():
@@ -27,14 +30,11 @@ def test_module_calls_blueprobe_without_a_local_pattern_table():
             imported.setdefault(node.module, []).extend(alias.name for alias in node.names)
         if isinstance(node, ast.Import):
             assert all(alias.name == "blueprobe" or "." not in alias.name for alias in node.names)
-    assert imported["blueprobe"] == ["detect_pattern", "get_pattern"]
+    assert set(imported["blueprobe"]) == {"detect_pattern", "get_pattern"}  # 遅延 import
     assert all("." not in module for module in imported)
     assert "dom_patterns" not in SOURCE
     assert "load_source" not in SOURCE
     assert "DOM_PATTERNS" not in SOURCE
-    import blueprobe
-    assert pattern_postprocess.detect_pattern is blueprobe.detect_pattern
-    assert pattern_postprocess.get_pattern is blueprobe.get_pattern
     handlers = [handler.type for node in ast.walk(tree) if isinstance(node, ast.ExceptHandler) for handler in [node]]
     assert all(handler is not None for handler in handlers)
     for handler in handlers:
@@ -125,7 +125,7 @@ def test_detection_errors_propagate(monkeypatch):
     def boom(html):
         raise RuntimeError("detector failed")
 
-    monkeypatch.setattr(pattern_postprocess, "detect_pattern", boom)
+    monkeypatch.setattr(blueprobe, "detect_pattern", boom)
     with pytest.raises(RuntimeError, match="detector failed"):
         pattern_for_html("<main>x</main>")
 

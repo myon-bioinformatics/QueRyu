@@ -3,7 +3,7 @@ import asyncio, io, json, tarfile, threading, time
 
 import pytest
 
-import cache_share as cs
+from queryu import share as cs
 from cache_core import Cache, CacheIntegrityError
 from queryu import HandlerClient, Response
 

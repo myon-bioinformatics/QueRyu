@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def build(out: Path) -> None:
     source = (ROOT / "queryu.py").read_text(encoding="utf-8")
-    cache = (ROOT / "cache_core.py").read_text(encoding="utf-8")
+    cache = (ROOT / "core" / "cache_core.py").read_text(encoding="utf-8")
     classes = [n for n in ast.parse(cache).body if isinstance(n, ast.ClassDef)]
     functions = [n for n in ast.parse(cache).body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     if [n.name for n in classes] != ["CacheIntegrityError", "Cache"] or functions:

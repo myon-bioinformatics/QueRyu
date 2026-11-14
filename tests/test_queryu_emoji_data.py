@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-import emoji_data
+import queryu
+from queryu import emoji as emoji_data
 from cache_core import Cache
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -130,9 +131,9 @@ def test_cli_offline_accumulate_and_lookup(tmp_path, capsys):
 
 def test_sequence_split_for_lookup():
     text = "a \U0001F1EF\U0001F1F5\U0001F1FA\U0001F1F8 #\ufe0f\u20e3 12 \U0001F3F4\u200d\u2620\ufe0f \U0001F3F4\U000E0067\U000E0062\U000E007F"
-    assert emoji_data._sequences(text) == ["\U0001F1EF\U0001F1F5", "\U0001F1FA\U0001F1F8", "#\ufe0f\u20e3",
+    assert queryu._emoji_sequences(text) == ["\U0001F1EF\U0001F1F5", "\U0001F1FA\U0001F1F8", "#\ufe0f\u20e3",
                                            "\U0001F3F4\u200d\u2620\ufe0f", "\U0001F3F4\U000E0067\U000E0062\U000E007F"]
-    assert emoji_data._sequences("\u00a9 2026 \u00ae\ufe0f \u00e9") == ["\u00a9", "\u00ae\ufe0f"]
+    assert queryu._emoji_sequences("\u00a9 2026 \u00ae\ufe0f \u00e9") == ["\u00a9", "\u00ae\ufe0f"]
 
 
 def test_committed_table_is_valid_and_sourced():

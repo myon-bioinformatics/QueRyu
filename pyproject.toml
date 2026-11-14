@@ -19,6 +19,6 @@ package = false
 [tool.pytest.ini_options]
 # サイクルデータ・blueprobe の fixture・nagoyaction/inbox は Aoi に残す（AOI_ROOT）。
 # BlueProbe は最新 main の checkout を PYTHONPATH で渡す（.github/workflows/ci.yml と同じ）
-pythonpath = [".", "ask"]
+pythonpath = [".", "core", "ask"]
 testpaths = ["tests"]
 norecursedirs = [".test-deps", "build", "reports"]

@@ -248,7 +248,8 @@ jobs:
           # vendor した numpy_min と最新 Aoi main のずれ: main への push と schedule では失敗、それ以外は xfail
           QUERYU_STRICT_DRIFT: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && '1' || '' }}
           AOI_ROOT: ${{ github.workspace }}/.test-deps/aoi
-          PYTHONPATH: ${{ github.workspace }}/.test-deps/blueprobe
+          # BlueProbe の取得元は npb/ にある（#53 以降。前の配置でも動く）
+          PYTHONPATH: ${{ github.workspace }}/.test-deps/blueprobe:${{ github.workspace }}/.test-deps/blueprobe/npb
       - name: Preserve JUnit report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
