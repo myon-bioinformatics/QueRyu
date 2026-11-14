@@ -505,18 +505,20 @@ def render(text: str, q: Query, unread: list[str], res: dict, suggestion_line: s
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("question", nargs="?", help="日本語の問い")
+    ap.add_argument("question", nargs="*", help="日本語の問い。空白で区切った語のまま渡してよい（引用符は要らない）。"
+                    "省略して標準入力（パイプ・FIFO）から渡すと、1行1問ずつ順に答える")
     ap.add_argument("--results", type=Path, default=None, help="判定済みの結果のフォルダ（--schema 以外では必須）")
     ap.add_argument("--cycle-dir", type=Path, default=None,
                     help="ask.toml を読むフォルダ。省略時は結果フォルダの親")
     ap.add_argument("--teams", type=Path, default=None, help="球団名 → コードの JSON。省略時は球団名を読まない")
     ap.add_argument("--suggest-threshold", type=float, default=None,
                     help="候補の類似度。省略時は ask.toml。未設定なら候補は確定しない")
-    ap.add_argument("--query", help="読み取りを飛ばし、Query を JSON で直接渡す（llama.cpp・MCP が選んだもの）")
+    ap.add_argument("--query", help="読み取りを飛ばし、Query を JSON で直接渡す（llama.cpp・MCP が選んだもの）。"
+                    "- なら標準入力から読む（引用符は要らない）")
     ap.add_argument("--schema", action="store_true", help="Query の JSON Schema を出す")
     ap.add_argument("--json", action="store_true", help="答えを JSON で出す")
     ap.add_argument("--log", type=Path, help="問いと読み取りを1行ずつ足す（JSONL）。同じ Query なら答えは同じ")
-    args = ap.parse_args(argv)
+    args = ap.parse_intermixed_args(argv)  # 語と --オプションが混ざっていてよい
 
     if args.schema:
         print(json.dumps(schema(), ensure_ascii=False, indent=2))
@@ -532,19 +534,27 @@ def main(argv=None) -> int:
         print(str(e), file=sys.stderr)
         return 1
     if args.query:
+        text = sys.stdin.read() if args.query == "-" else args.query
         try:
-            q = validate_query(json.loads(args.query))
+            q = validate_query(json.loads(text))
         except (ValueError, TypeError) as e:
             print(f"Query の値が型の外: {e}", file=sys.stderr)
             return 2
-        text = args.query
-        parsed = ParsedInput(text, q)
-    elif args.question:
-        text = args.question
-        parsed = parse_input(text)
-        q = parsed.query
-    else:
-        ap.error("問いか --query か --schema が要る")
+        return _answer(text, ParsedInput(text, q), results, threshold, args)
+    if args.question:
+        text = " ".join(args.question)
+        return _answer(text, parse_input(text), results, threshold, args)
+    if sys.stdin is None or sys.stdin.isatty():
+        ap.error("問いか --query か --schema が要る（標準入力から1行1問でもよい）")
+    # 🔁 キュー: 1行1問、届いた順に答える（パイプ・FIFO）。--json なら1行1件の JSON
+    codes = [_answer(line.strip(), parse_input(line.strip()), results, threshold, args, stream=True)
+             for line in sys.stdin if line.strip()]
+    return max(codes, default=0)
+
+
+def _answer(text: str, parsed, results: Path, threshold, args, *, stream: bool = False) -> int:
+    """1つの問いに答えて表示する。答えに誤りがあれば 1。"""
+    q = parsed.query
     unread = parsed.unread
     res = parsed.blocked_answer() if parsed.status == "undetermined" else answer_results(q, results)
     hinted = suggestion_for(text, results, unread, res, threshold, query=q)
@@ -555,8 +565,8 @@ def main(argv=None) -> int:
                                  **parsed.metadata()}, ensure_ascii=False) + "\n")
     payload = {"query": asdict(q), "unread": unread, **parsed.metadata(), **res,
                "suggestions": hinted["candidates"], "suggestion_status": hinted["status"]}
-    print(json.dumps(payload, ensure_ascii=False, indent=2) if args.json
-          else render(text, q, unread, res, hinted["line"]))
+    print(json.dumps(payload, ensure_ascii=False, indent=None if stream else 2) if args.json
+          else render(text, q, unread, res, hinted["line"]), flush=stream)
     return 1 if res.get("error") else 0
 
 

@@ -1,6 +1,6 @@
 import json, subprocess, sys, tracemalloc, types
 from pathlib import Path; from unittest.mock import patch
-import cache_share
+import queryu  # cache_share は queryu.py の share に入った
 
 
 def main():
@@ -10,12 +10,12 @@ def main():
     rows=[{'key':str(i%100),'status':200} for i in range(100000)]
     result={}
     expected=None
-    for name,module in [('baseline',old),('current',cache_share)]:
+    for name,module,rows_name,query in [('baseline',old,'_rows',lambda: old.query(None)),('current',queryu,'_share_rows',lambda: queryu.share.query(None))]:
         samples=[]
         for _ in range(3):
-            with patch.object(module,'_rows',return_value=rows):
+            with patch.object(module,rows_name,return_value=rows):
                 tracemalloc.start()
-                got=module.query(None)
+                got=query()
                 samples.append(tracemalloc.get_traced_memory()[1])
                 tracemalloc.stop()
             if expected is None: expected=got

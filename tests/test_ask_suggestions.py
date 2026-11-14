@@ -141,3 +141,44 @@ def test_repo_without_sets_does_not_call_e25_missing():
     res = answer_results(Query(target="E25"), results)
     assert res["error"].startswith("結果が読めない")
     assert "結果にない" not in res["error"]
+
+
+class _Queue:
+    """パイプ・FIFO の代わり。端末ではない標準入力。"""
+
+    def __init__(self, text):
+        import io
+        self._io = io.StringIO(text)
+
+    def __iter__(self):
+        return iter(self._io)
+
+    def read(self):
+        return self._io.read()
+
+    def isatty(self):
+        return False
+
+
+def test_question_words_need_no_quotes_and_may_sit_between_options(tmp_path, capsys):
+    results = tmp_path / "out"
+    _write(results, [_prop("P1", "得失点差がプラスなら上位")])
+    assert main(["P1", "--results", str(results), "の判例は？", "--json", "--suggest-threshold", "0"]) == 0
+    assert json.loads(capsys.readouterr().out)["answer"] == 1
+
+
+def test_questions_from_a_queue_are_answered_in_order(tmp_path, capsys, monkeypatch):
+    results = tmp_path / "out"
+    _write(results, [_prop("P1", "得失点差がプラスなら上位"), _prop("P2", "失点が少なければ上位")])
+    monkeypatch.setattr("sys.stdin", _Queue("P1 の判例は？\n\nP2 の判例は？\n"))
+    assert main(["--results", str(results), "--json", "--suggest-threshold", "0"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert [json.loads(line)["query"]["target"] for line in lines] == ["P1", "P2"]
+
+
+def test_query_json_can_come_from_stdin(tmp_path, capsys, monkeypatch):
+    results = tmp_path / "out"
+    _write(results, [_prop("P1", "得失点差がプラスなら上位")])
+    monkeypatch.setattr("sys.stdin", _Queue(json.dumps({"target": "P1"})))
+    assert main(["--query", "-", "--results", str(results), "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["query"]["target"] == "P1"

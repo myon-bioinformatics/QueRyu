@@ -41,7 +41,7 @@ This repository was split out from the [Aoi](https://github.com/myon-bioinformat
 
 ### Single-file entry (experimental)
 
-`python scripts/build_single_file.py dist-single/queryu.py` generates a `queryu.py` containing the canonical `cache_core.py` classes. The generated file supports `--help` and the offline cache API without a checkout. To execute dataset commands, place `blueprobe.py` and the required source module alongside it; for example, `npb_calendar.py` is needed for `--source npb_calendar`. The default freeze-list path is beside the generated file. Building the entry does not install a uv tool or include source modules. Regenerate it when either input changes.
+`python scripts/build_single_file.py dist-single/queryu.py` generates a `queryu.py` containing the canonical `core/cache_core.py` classes. The generated file supports `--help` and the offline cache API without a checkout. To execute dataset commands, place `blueprobe.py` and the required source module alongside it; for example, `npb_calendar.py` (BlueProbe's `npb/`) is needed for `--source npb_calendar`. `share`, `emoji` and `post` are already inside it. The default freeze-list path is beside the generated file. Building the entry does not install a uv tool or include source modules. Regenerate it when either input changes.
 
 ```bash
 python scripts/build_single_file.py dist-single/queryu.py
@@ -51,30 +51,41 @@ python dist-single/queryu.py --help
 To inspect a source without fetching, place `blueprobe.py` and your source module beside the generated file, then use:
 
 ```bash
-python dist-single/queryu.py --source your_source --years 2024 --plan --offline
+python dist-single/queryu.py --source your_source --years 2024 \
+  --cache ./cache --plan --offline
 ```
 
 Replace `your_source` with the name of an available source module. The command reports cache counts and missing pages; it does not fetch or create a dataset. Without BlueProbe the command exits 2 with a placement hint. Actual extraction and fetching need the corresponding source component and, when building a dataset, `--out`.
 
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). There are no runtime dependencies: `ask/suggest.py` uses `vendor/aoi/shrink/numpy_min.py`, vendored from Aoi and pinned in `vendor.lock.json` (it uses the system LAPACK/BLAS through ctypes when present and falls back to the standard library). numpy is a dev dependency, used only to compare results in tests.
-Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used.
+Extraction (`blueprobe`, `npb_calendar`, `npb_team_annual`) checks out [BlueProbe](https://github.com/myon-bioinformatics/BlueProbe) and passes it on `PYTHONPATH`. Aoi's `blueprobe/` is not used. QueRyu never looks for a sibling directory itself; inside Aoi, `python aoi.py queryu …` (or `import aoi`) puts Aoi's `blueprobe/` on the path.
 
 ```bash
 git clone https://github.com/myon-bioinformatics/QueRyu.git
 git clone https://github.com/myon-bioinformatics/BlueProbe.git
 cd QueRyu
 uv sync
-PYTHONPATH=../BlueProbe uv run python queryu.py --help
+PYTHONPATH=../BlueProbe:../BlueProbe/npb uv run python queryu.py --help
 ```
 
-The main arguments of `queryu.py` are `--source`, `--years`, `--cache` (default `data/raw/<source>`), `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`. An example of building a dataset is under "Datasets" below.
+The main arguments of `queryu.py` are `--source`, `--years`, `--cache`, `--out`, `--wait`, `--offline`, `--plan`, and `--freeze`.
+
+- `--cache` is optional. Without it, fetched pages are used for that run only and nothing is written (`--offline` needs `--cache`). The cache location is the caller's choice (Aoi's pipeline passes `data/raw/<source>`).
+- `--month-key` takes a template that needs no shell quotes, such as `YYYY_MM` (YYYY = 4-digit year, MM = 2-digit month), or a regex with named `year` / `month` groups.
+
+`ask/ask.py` takes the question as plain words, with no quotes, in any order with the options. Without a question it reads one question per line from standard input (a pipe or a FIFO) and answers them in order (`--json`: one JSON object per line). `--query -` reads the Query JSON from standard input.
+
+```bash
+python ask/ask.py P1 の判例は？ --results out
+mkfifo q && python ask/ask.py --results out --json < q &   # then: echo "P1 の判例は？" > q
+``` An example of building a dataset is under "Datasets" below.
 
 ## Layout
 
 | File | Contents |
 |---|---|
-| `queryu.py` | CLI. `Cache` (storage and provenance), `PoliteFetcher` (low-load fetching), `build()` (observation datasets) |
-| `cache_core.py` | Standard-library-only offline cache/snapshot API ("Stdlib cache distribution" below) |
+| `queryu.py` | The single file (stdlib only). `Cache` (storage and provenance), `PoliteFetcher` (low-load fetching), `build()` (observation datasets), and the tools 🗃️ `share` · 😀 `emoji` · 🧹 `post` (`python queryu.py <tool> …`, `queryu.<tool>.…()` from Python) |
+| `core/cache_core.py` | Standard-library-only offline cache/snapshot API ("Stdlib cache distribution" below). `queryu.py` adds its own `core/` to the end of the path |
 | `frozen_seasons.json` | Manual freeze list of seasons that are not rechecked |
 | `ask/` | Queries (`ask.py`), proposition ID candidates for confirmation (`suggest.py`), list of registered questions (`bank.py`) |
 | `docs/ask.md` | Query spec |
@@ -125,8 +136,8 @@ key, url, group, status, file, sha256, bytes, fetched_at, last_modified, etag, c
 Because it contains raw observations, `data/` is not committed to git.
 
 ```bash
-PYTHONPATH=../BlueProbe uv run python queryu.py --source npb_calendar --years 2012-2025 \
-  --out data/observations/npb_calendar/games.jsonl [--offline]
+PYTHONPATH=../BlueProbe:../BlueProbe/npb uv run python queryu.py --source npb_calendar --years 2012-2025 \
+  --cache data/raw/npb_calendar --out data/observations/npb_calendar/games.jsonl [--offline]
 ```
 
 When running from Aoi's root, use `uv run python queryu/queryu.py ...`.
@@ -169,7 +180,7 @@ execution attestation.
 
 ## Stdlib cache distribution
 
-`cache_core.py` is the minimal offline API (`Cache`, `CacheIntegrityError`). It
+`core/cache_core.py` is the minimal offline API (`Cache`, `CacheIntegrityError`). It
 verifies the original body bytes and exports `html-snapshot/1`, without BlueProbe,
 NumPy, HTTP clients, Aoi files or an implicit source checkout. Unknown code
 provenance remains `None`; callers may pass `source_version` explicitly. The full
@@ -181,7 +192,7 @@ Acquisition uses the existing synchronous urllib client; no asynchronous support
 is claimed by the min artifact. Whole-tree subtree synchronization remains the
 Aoi/QueRyu development relationship. MIT notices are kept in `LICENSE`.
 
-## Querying, handing over, and concurrently fetching the cache (`cache_share.py`)
+## Querying, handing over, and concurrently fetching the cache (`queryu.py share`)
 
 A stdlib-only module on top of `cache_core.Cache`. It hands fetched bodies, without refetching, to
 the extraction side (BlueProbe, etc.), other checkouts, or other people.
@@ -210,10 +221,10 @@ the extraction side (BlueProbe, etc.), other checkouts, or other people.
   - Writes to the manifest are done one at a time under a lock.
 
 ```bash
-python cache_share.py --cache data/cache query --group npb_calendar --since 2026-01-01
-python cache_share.py --cache data/cache export --key 'npb_calendar:2024_*' --out share.tar
-python cache_share.py --cache other/cache import share.tar
-python cache_share.py --cache data/cache verify --group npb_calendar
+python queryu.py share --cache data/cache query --group npb_calendar --since 2026-01-01
+python queryu.py share --cache data/cache export --key 'npb_calendar:2024_*' --out share.tar
+python queryu.py share --cache other/cache import share.tar
+python queryu.py share --cache data/cache verify --group npb_calendar
 ```
 
 - `verify_cache(cache, entries=None)` / `verify`: for lines with a body (the full history by default), checks the gzip body against
@@ -228,7 +239,7 @@ Cycle data (`cycles/`), blueprobe fixtures, and `nagoyaction/inbox` stay in Aoi.
 ```sh
 git clone https://github.com/myon-bioinformatics/Aoi.git ../Aoi
 git clone https://github.com/myon-bioinformatics/BlueProbe.git ../BlueProbe
-AOI_ROOT=../Aoi PYTHONPATH=../BlueProbe uv run --locked pytest -q
+AOI_ROOT=../Aoi PYTHONPATH=../BlueProbe:../BlueProbe/npb uv run --locked pytest -q
 ```
 
 CI does the same on Python 3.11–3.15.
@@ -264,13 +275,13 @@ Each subproject of the parent [Aoi](https://github.com/myon-bioinformatics/Aoi) 
 ## Emoji names (Unicode data via npm, and an offline collection)
 
 unicode.org is often unreachable from sandboxes and CI, but the npm registry is reachable.
-`emoji_data.py` (standard library only) fetches `unicode-emoji-json`, which is unicode.org's emoji-test.txt (CLDR short names, groups, versions)
+`python queryu.py emoji` (standard library only) fetches `unicode-emoji-json`, which is unicode.org's emoji-test.txt (CLDR short names, groups, versions)
 as JSON, from npm just once, and saves it in QueRyu's `Cache` with provenance.
 
 ```sh
-python emoji_data.py --cache data/raw/npm --names emoji_names.json --use inventory.json   # fetch (first time only) + collect
-python emoji_data.py --cache data/raw/npm --offline --lookup "TEXT"                       # look up from the cache only
-python emoji_data.py --names emoji_names.json --lookup "TEXT"                             # look up from the collected table only (no network or cache needed)
+python queryu.py emoji --cache data/raw/npm --names emoji_names.json --use inventory.json   # fetch (first time only) + collect
+python queryu.py emoji --cache data/raw/npm --offline --lookup "TEXT"                       # look up from the cache only
+python queryu.py emoji --names emoji_names.json --lookup "TEXT"                             # look up from the collected table only (no network or cache needed)
 ```
 
 - The version is fixed as `name@x.y.z` (`latest` is not used). It gets the tarball from the registry's version metadata, confirms it is on the registry host and matches the sha512 `integrity`, and then saves it. `--offline` never goes to the network and stops if not yet fetched

@@ -1,7 +1,7 @@
-"""単独の QueRyu では、隣のディレクトリ（../blueprobe など）を相対パスで読まない。
+"""QueRyu は隣のディレクトリ（../blueprobe など）を読まない。兄弟の場所は呼び出し側が入れる。
 
-BlueProbe は最新 main の checkout を PYTHONPATH で渡す。隣の ``blueprobe/`` を読むのは、親が Aoi の checkout
-（pyproject.toml と cycles/ がある）のときだけで、その処理は ``queryu.aoi_sibling_path`` 一か所に限る。
+Aoi では aoi.py（``python aoi.py queryu …``、``import aoi``）が入れ、単独では BlueProbe の最新 main の
+checkout を PYTHONPATH で渡す。QueRyu の中に兄弟を探す処理は置かない。
 """
 import ast, os, subprocess, sys
 from pathlib import Path
@@ -19,13 +19,7 @@ SIBLINGS = {"blueprobe", "sakanalytics", "pythdragoras", "nagoyaction", "dragowi
 def _sibling_path_uses(path: Path):
     """``.parent`` / ``.parents[...]`` と兄弟名の文字列を ``/`` でつなぐ式、と sys.path の操作を探す。"""
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    allowed = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "aoi_sibling_path":
-            allowed |= set(range(node.lineno, node.end_lineno + 1))
-    for node in ast.walk(tree):
-        if getattr(node, "lineno", None) in allowed:
-            continue
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
             text = ast.unparse(node)
             if ".parent" in text and any(f"'{s}'" in text or f'"{s}"' in text for s in SIBLINGS):
@@ -41,32 +35,6 @@ def test_sources_do_not_reach_siblings_by_relative_path():
     assert {k: v for k, v in found.items() if v} == {}
 
 
-def test_sibling_is_added_only_inside_an_aoi_checkout(tmp_path, monkeypatch):
-    monkeypatch.setattr(sys, "path", list(sys.path))
-    standalone = tmp_path / "work"
-    (standalone / "QueRyu").mkdir(parents=True)
-    (standalone / "blueprobe").mkdir()  # 単独の QueRyu の隣に blueprobe/ があっても読まない
-    queryu.aoi_sibling_path(standalone / "QueRyu", "queryu_test_missing_module")
-    assert str(standalone / "blueprobe") not in sys.path
-
-    aoi = tmp_path / "aoi"
-    for d in ("queryu", "blueprobe", "cycles"):
-        (aoi / d).mkdir(parents=True)
-    (aoi / "pyproject.toml").write_text("", encoding="utf-8")
-    queryu.aoi_sibling_path(aoi / "queryu", "queryu_test_missing_module")
-    assert sys.path[0] == str(aoi / "blueprobe")
-
-
-def test_importable_module_is_never_shadowed_by_a_sibling(tmp_path, monkeypatch):
-    monkeypatch.setattr(sys, "path", list(sys.path))
-    aoi = tmp_path / "aoi"
-    for d in ("queryu", "blueprobe", "cycles"):
-        (aoi / d).mkdir(parents=True)
-    (aoi / "pyproject.toml").write_text("", encoding="utf-8")
-    queryu.aoi_sibling_path(aoi / "queryu", "blueprobe")
-    assert str(aoi / "blueprobe") not in sys.path
-
-
 def test_blueprobe_modules_come_from_the_expected_checkout(aoi_root):
     import blueprobe
     import npb_calendar
@@ -76,7 +44,7 @@ def test_blueprobe_modules_come_from_the_expected_checkout(aoi_root):
         origin = Path(module.__file__).resolve()
         if ROOT == aoi_root / "queryu":
             expected = aoi_root / "blueprobe" / (module.__name__ + ".py")
-            if module is not blueprobe and (expected.parent / "npb" / expected.name).is_file():
+            if module is not blueprobe and not expected.is_file():
                 expected = expected.parent / "npb" / expected.name
             assert origin == expected.resolve()
         else:
