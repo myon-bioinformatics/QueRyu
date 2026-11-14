@@ -75,7 +75,10 @@ def test_blueprobe_modules_come_from_the_expected_checkout(aoi_root):
     for module in (blueprobe, npb_calendar, npb_team_annual):
         origin = Path(module.__file__).resolve()
         if ROOT == aoi_root / "queryu":
-            assert origin.parent == aoi_root / "blueprobe"
+            expected = aoi_root / "blueprobe" / (module.__name__ + ".py")
+            if module is not blueprobe and (expected.parent / "npb" / expected.name).is_file():
+                expected = expected.parent / "npb" / expected.name
+            assert origin == expected.resolve()
         else:
             assert origin.parent != (ROOT.parent / "blueprobe").resolve(), origin
             assert origin.parent in pinned, (origin, pinned)
