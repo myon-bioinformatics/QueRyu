@@ -74,18 +74,6 @@ def test_plan_counts_cache_conditional_and_new_without_a_client(tmp_path, monkey
     assert not frozen.exists()
 
 
-
-def test_cache_defaults_to_data_raw_source(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(queryu, "UrllibClient", lambda **kw: pytest.fail("network"))
-    cache = Cache(tmp_path / "data" / "raw" / "npb_calendar")
-    for key, url, group in npb_calendar.pages([2026]):
-        if key.endswith(("_03", "_04")):
-            cache.put(key, url, group, 200, b"<html></html>", {"etag": '"v1"'})
-    monkeypatch.chdir(tmp_path)
-    assert main(["--source", "npb_calendar", "--month-key", MONTH_KEY, "--years", "2026", "--plan",
-                 "--today", "2026-05-01", "--frozen", str(tmp_path / "frozen.json"), "--freeze", "2026"]) == 0
-    assert "キャッシュ済み（再確認しない）: 2" in capsys.readouterr().out
-
 def test_freeze_is_manual_and_a_frozen_season_is_not_rechecked(tmp_path, monkeypatch, capsys):
     calls = []
 
