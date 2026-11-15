@@ -5,18 +5,6 @@ on:
   pull_request:
   schedule:
     - cron: "30 7 * * *"
-  workflow_dispatch:
-    inputs:
-      aoi_ref:
-        description: "Aoi ref override for reproducing an old run. Empty resolves latest main."
-        required: false
-        default: ""
-        type: string
-      blueprobe_ref:
-        description: "BlueProbe ref override for reproducing an old run. Empty resolves latest main."
-        required: false
-        default: ""
-        type: string
 permissions:
   contents: read
 jobs:
@@ -28,7 +16,7 @@ jobs:
   resolve-vendor:
     name: Resolve Aoi and BlueProbe
     needs: changes
-    if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -39,8 +27,6 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ github.token }}
-          AOI_REF: ${{ github.event.inputs.aoi_ref }}
-          BLUEPROBE_REF: ${{ github.event.inputs.blueprobe_ref }}
         run: |
           set -euo pipefail
           strict=0
@@ -127,7 +113,7 @@ jobs:
           resolve_repo blueprobe myon-bioinformatics/BlueProbe "${BLUEPROBE_REF:-}"
 
   test:
-    if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    if: needs.changes.outputs.product_changed == 'true' || github.event_name == 'schedule'
     needs: [changes, resolve-vendor]
     name: ${{ matrix.backend == 'pure' && 'pytest numpy_min NUMPY_MIN_PURE forced' || 'pytest' }} (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
@@ -139,8 +125,8 @@ jobs:
         # Aoi の CI と同じ。failure-identity の expected-reports と揃えること
         python: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         backend: [lapack]
-        # PURE 強制 lane。PR と push は 3.14 だけ、schedule と workflow_dispatch は 3.11 と 3.15 も
-        include: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '[{"python":"3.11","backend":"pure"},{"python":"3.14","backend":"pure"},{"python":"3.15","backend":"pure"}]' || '[{"python":"3.14","backend":"pure"}]') }}
+        # PURE 強制 lane。PR と push は 3.14 だけ、schedule は 3.11 と 3.15 も
+        include: ${{ fromJSON(github.event_name == 'schedule' && '[{"python":"3.11","backend":"pure"},{"python":"3.14","backend":"pure"},{"python":"3.15","backend":"pure"}]' || '[{"python":"3.14","backend":"pure"}]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -155,7 +141,7 @@ jobs:
           save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           prune-cache: true
       # サイクルデータ（cycles/）・blueprobe の fixture・nagoyaction/inbox は Aoi に残す。
-      # 依存の SHA は固定しない。deps が実行時に main（または workflow_dispatch の ref）を解決する。
+      # 依存の SHA は固定しない。deps が実行時に main を解決する。
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/Aoi
@@ -267,13 +253,13 @@ jobs:
 
   failure-identity:
     needs: [changes, test]
-    if: always() && (needs.changes.outputs.product_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+    if: always() && (needs.changes.outputs.product_changed == 'true' || github.event_name == 'schedule')
     permissions:
       contents: read
       actions: read
     uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-junit-identity.yml@9e3da7ae1846e9604ebc24bb5178f7de094a4e77
     with:
-      expected-reports: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.11/junit.xml","junit-pure-py3.14/junit.xml","junit-pure-py3.15/junit.xml"]' || '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.14/junit.xml"]' }}
+      expected-reports: ${{ github.event_name == 'schedule' && '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.11/junit.xml","junit-pure-py3.14/junit.xml","junit-pure-py3.15/junit.xml"]' || '["junit-py3.11/junit.xml","junit-py3.12/junit.xml","junit-py3.13/junit.xml","junit-py3.14/junit.xml","junit-py3.15/junit.xml","junit-pure-py3.14/junit.xml"]' }}
       artifact-pattern: junit-*
       output-artifact: failure-identity
       commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}

@@ -12,6 +12,7 @@ dependencies = []
 cache-test = ["pytest>=9.1.1"]
 # numpy はテストで numpy_min の結果と突き合わせるためだけに使う。
 dev = ["pytest>=9.1.1", "numpy>=2.4.6"]
+stdlib-test = ["pytest>=8", "pyyaml>=6"]
 
 [tool.uv]
 package = false
