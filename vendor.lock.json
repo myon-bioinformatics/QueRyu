@@ -9,6 +9,15 @@
       "destination": "vendor/aoi/shrink/numpy_min.py",
       "blob_sha": "8dbd26bc91084cb94f34b19e65aa50a27c9fe0e8",
       "sha256": "7c1f86ebb012ad355db3f690bea39916aa7d927967b519dfaf5acf54879c5a4c"
+    },
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "ref": "6c29503cf17eda856766ddfdf4d66a5b0965a8b1",
+      "commit": "6c29503cf17eda856766ddfdf4d66a5b0965a8b1",
+      "source": "fleet_check.py",
+      "destination": "vendor/fleet_check.py",
+      "blob_sha": "5b6b732ff2c4fa966a64b6ab07e4da8d563038cf",
+      "sha256": "ae36c7e4d0f8d19ea5a62de98860a37302a65ab48db1bee2bdb6ada4bf7be56d"
     }
   ]
 }

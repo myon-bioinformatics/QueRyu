@@ -150,25 +150,15 @@ def test_backend_matches_ci_lane():
     assert suggest.np.BACKEND == expected
 
 
-def test_vendor_lock_matches_vendored_copy():
-    lock = json.loads((ROOT / "vendor.lock.json").read_text(encoding="utf-8"))
-    assert lock["schema"] == "vendor-lock/1" and set(lock) == {"schema", "files"}
-    (entry,) = lock["files"]
-    assert set(entry) == {"repository", "ref", "commit", "source", "destination", "blob_sha", "sha256"}
-    assert entry["repository"] == "myon-bioinformatics/Aoi"
-    assert entry["ref"] == entry["commit"] and len(entry["commit"]) == 40
-    assert entry["source"] == "shrink/numpy_min.py"
-    assert entry["destination"] == "vendor/aoi/shrink/numpy_min.py"
-    data = (ROOT / entry["destination"]).read_bytes()
-    assert hashlib.sha256(data).hexdigest() == entry["sha256"]
-    blob = hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
-    assert blob == entry["blob_sha"]
+def test_vendored_copy_matches_aoi_checkout():
+    # lock と置いたバイトの照合は tests/test_fleet.py（fleet.check_lock）。ここは Aoi の checkout とのずれだけ
     aoi = os.environ.get("AOI_ROOT")
-    if aoi and (Path(aoi) / entry["source"]).is_file():
+    if aoi and (Path(aoi) / "shrink/numpy_min.py").is_file():
         # Aoi の checkout（CI では最新 main）とずれたら知らせる。更新は lock ごと PR で行う
-        upstream = hashlib.sha256((Path(aoi) / entry["source"]).read_bytes()).hexdigest()
-        if upstream != entry["sha256"]:
-            msg = (f"Aoi の numpy_min.py が vendor 時から変わった（{upstream} != {entry['sha256']}）。"
+        upstream = hashlib.sha256((Path(aoi) / "shrink/numpy_min.py").read_bytes()).hexdigest()
+        vendored = hashlib.sha256(VENDORED.read_bytes()).hexdigest()
+        if upstream != vendored:
+            msg = (f"Aoi の numpy_min.py が vendor 時から変わった（{upstream} != {vendored}）。"
                    "vendor/aoi と vendor.lock.json を PR で更新する")
             if os.environ.get("QUERYU_STRICT_DRIFT") == "1":
                 pytest.fail(msg)  # main への push と schedule

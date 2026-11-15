@@ -89,7 +89,7 @@ mkfifo q && python ask/ask.py --results out --json < q &   # then: echo "P1 の�
 | `frozen_seasons.json` | Manual freeze list of seasons that are not rechecked |
 | `ask/` | Queries (`ask.py`), proposition ID candidates for confirmation (`suggest.py`), list of registered questions (`bank.py`) |
 | `docs/ask.md` | Query spec |
-| `tests/` | pytest, one file per purpose: `test_queryu.py` (📥 fetch, `--plan`, freeze, single file) · `test_queryu_cache.py` (🗃️ cache, `share`, urllib) · `test_queryu_ask.py` (`ask/`) · `test_queryu_emoji.py` (😀) · `test_queryu_post.py` (🧹) · `test_queryu_numpy_min.py` (vendored numpy_min vs NumPy) · CI and layout guards |
+| `tests/` | pytest, one file per purpose: `test_queryu.py` (📥 fetch, `--plan`, freeze, single file) · `test_queryu_cache.py` (🗃️ cache, `share`, urllib) · `test_queryu_ask.py` (`ask/`) · `test_queryu_emoji.py` (😀) · `test_queryu_post.py` (🧹) · `test_queryu_numpy_min.py` (vendored numpy_min vs NumPy) · `test_fleet.py` (🌐 shared checks through `vendor/fleet_check.py`: 🔒 lock, 📌 parent pins, ⏱️ benchmark guard, 🧾 CI receipts) · layout guards |
 
 ## Care for sources
 

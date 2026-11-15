@@ -1,5 +1,5 @@
 """🗃️ キャッシュ: 元のバイトの照合と不変の履歴、標準ライブラリの urllib クライアント、
-share（query・bundle・snapshot・fetch_many・verify）、最新だけを持つ query の保持とその計測スクリプト。
+share（query・bundle・snapshot・fetch_many・verify）、最新だけを持つ query の保持（計測スクリプトの検査は tests/test_fleet.py）。
 
 ネットワークは 127.0.0.1 の一時サーバーだけ。NumPy も取得元のページも使わない（cache-test: docs/nano-cache-tests.md）。
 `python -S -m unittest discover -s tests -p test_queryu_cache.py` では unittest.TestCase のクラスだけが動く。
@@ -599,47 +599,6 @@ class QueryRetentionTests(unittest.TestCase):
         with patch.object(queryu,'_share_rows',return_value=rows):
             self.assertEqual(cs.query(None)[-1]['sequence'],99)
             self.assertEqual(cs.query(None,with_body=False)[-1]['status'],500)
-
-
-# ──── benchmark: scripts/benchmark_query_retention.py in normal and optimized subprocesses ────────────────
-
-# 比較の基準（旧 cache_share.py の代わり）: 今の share.query に、差し替えられる _rows を通す
-BASELINE = b"""import queryu
-from unittest import mock
-def _rows(cache):
-    return queryu._share_rows(cache)
-def query(cache, **kw):
-    with mock.patch.object(queryu, "_share_rows", lambda c: _rows(c)):
-        return queryu.share.query(cache, **kw)
-"""
-
-class BenchmarkValidationTests(unittest.TestCase):
-    def test_parity_in_both_interpreter_modes(self):
-        for optimized in (False, True):
-            for mismatch in (False, True):
-                with self.subTest(optimized=optimized, mismatch=mismatch):
-                    code = """
-from contextlib import nullcontext
-from pathlib import Path
-import runpy
-from unittest.mock import patch
-ROOT = Path(%r)
-g = runpy.run_path(str(ROOT / 'scripts/benchmark_query_retention.py'))['main'].__globals__
-with patch.object(g['subprocess'], 'check_output', return_value=%r):
-    with %s:
-        g['main']()
-""" % (str(ROOT), BASELINE, "patch.object(g['queryu'].share, 'query', side_effect=[['first'], ['different']])" if mismatch else 'nullcontext()')
-                    result = subprocess.run(
-                        [sys.executable, '-S', *(['-O'] if optimized else []), '-c', code],
-                        cwd=ROOT, capture_output=True, text=True, timeout=60,
-                    )
-                    if mismatch:
-                        self.assertEqual(result.returncode, 1, result.stderr)
-                        self.assertEqual(result.stdout, '')
-                        self.assertIn('result mismatch', result.stderr)
-                    else:
-                        self.assertEqual(result.returncode, 0, result.stderr)
-                        self.assertTrue(result.stdout.startswith('{'), result.stdout)
 
 
 if __name__ == "__main__":
